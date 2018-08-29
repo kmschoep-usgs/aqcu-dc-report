@@ -1,0 +1,13 @@
+gov/usgs/aqcu/config/WebMvcConfig.class
+gov/usgs/aqcu/parameter/DerivationChainRequestParameters.class
+gov/usgs/aqcu/model/DerivationChainReportMetadata.class
+gov/usgs/aqcu/retrieval/TimeSeriesDescriptionListService.class
+gov/usgs/aqcu/Application.class
+gov/usgs/aqcu/config/WebMvcConfig$1.class
+gov/usgs/aqcu/config/OAuth2ResourceServerConfig.class
+gov/usgs/aqcu/model/DerivationChainReport.class
+gov/usgs/aqcu/config/SwaggerConfig.class
+gov/usgs/aqcu/builder/DerivationChainReportBuilderService.class
+gov/usgs/aqcu/Controller.class
+gov/usgs/aqcu/builder/ReportUrlBuilderService.class
+gov/usgs/aqcu/serializer/SwaggerGsonSerializer.class

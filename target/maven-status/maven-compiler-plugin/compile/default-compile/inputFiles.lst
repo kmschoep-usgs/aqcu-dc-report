@@ -1,0 +1,12 @@
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/model/DerivationChainReport.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/builder/DerivationChainReportBuilderService.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/builder/ReportUrlBuilderService.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/config/SwaggerConfig.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/serializer/SwaggerGsonSerializer.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/Controller.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/retrieval/TimeSeriesDescriptionListService.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/model/DerivationChainReportMetadata.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/config/WebMvcConfig.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/config/OAuth2ResourceServerConfig.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/parameter/DerivationChainRequestParameters.java
+/home/zmoore/dev/projects/aqcu/aqcu-dc-report/src/main/java/gov/usgs/aqcu/Application.java
