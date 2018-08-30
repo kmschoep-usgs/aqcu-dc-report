@@ -7,29 +7,29 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Time
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.RatingCurve;
 
 public class DerivationChainReport {	
-	private TimeSeriesDescription primaryTsMetadata;
+	private List<DerivationNode> derivationsInChain;
 	private DerivationChainReportMetadata reportMetadata;
 	
 	
 	public DerivationChainReport() {
-		primaryTsMetadata = new TimeSeriesDescription();
 		reportMetadata = new DerivationChainReportMetadata();
+		derivationsInChain = new ArrayList();
+	}
+
+	public List<DerivationNode> getDerivationsInChain() {
+		return derivationsInChain;
 	}
 	
 	public DerivationChainReportMetadata getReportMetadata() {
 		return reportMetadata;
 	}
-	
-	public TimeSeriesDescription getPrimaryTsMetadata() {
-		return primaryTsMetadata;
+
+	public void setDerivationsInChain(List<DerivationNode> derivationsInChain) {
+		this.derivationsInChain = derivationsInChain;
 	}
 	
 	public void setReportMetadata(DerivationChainReportMetadata val) {
 		reportMetadata = val;
-	}
-	
-	public void setPrimaryTsMetadata(TimeSeriesDescription val) {
-		primaryTsMetadata = val;
 	}
 }
 	

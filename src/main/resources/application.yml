@@ -68,3 +68,7 @@ spring:
     name: aqcu-tss-report
   jmx:
     default-domain: aqcu-tss-report
+
+logging:
+  level:
+    gov.usgs.aqcu: DEBUG

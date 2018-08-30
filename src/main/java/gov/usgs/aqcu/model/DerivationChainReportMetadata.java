@@ -10,20 +10,20 @@ import gov.usgs.aqcu.parameter.DerivationChainRequestParameters;
 
 public class DerivationChainReportMetadata extends ReportMetadata {
 	private DerivationChainRequestParameters requestParameters;
-	private String primaryParameter;
-	private String primaryTimeSeriesIdentifier;
+	private String primarySeriesLabel;
+	private String primaryTsIdentifier;
 	private String requestingUser;
 
 	public DerivationChainReportMetadata() {
 		super();
 	}
 
-	public String getPrimaryTimeSeriesIdentifier() {
-		return primaryTimeSeriesIdentifier;
+	public String getPrimaryTsIdentifier() {
+		return primaryTsIdentifier;
 	}
 	
-	public String getPrimaryParameter() {
-		return primaryParameter;
+	public String getPrimarySeriesLabel() {
+		return primarySeriesLabel;
 	}
 
 	public String getRequestingUser() {
@@ -34,12 +34,12 @@ public class DerivationChainReportMetadata extends ReportMetadata {
 		return requestParameters;
 	}
 	
-	public void setPrimaryTimeSeriesIdentifier(String val) {
-		primaryTimeSeriesIdentifier = val;
+	public void setPrimaryTsIdentifier(String val) {
+		primaryTsIdentifier = val;
 	}
 
-	public void setPrimaryParameter(String val) {
-		primaryParameter = val;
+	public void setPrimarySeriesLabel(String val) {
+		primarySeriesLabel = val;
 	}
 
 	public void setRequestingUser(String val) {
@@ -47,10 +47,8 @@ public class DerivationChainReportMetadata extends ReportMetadata {
 	}
 	
 	public void setRequestParameters(DerivationChainRequestParameters val) {
+		//Report Period should be null as it doesn't affect this report
 		requestParameters = val;
-		//Report Period displayed should be exactly as recieved, so get as UTC
-		setStartDate(val.getStartInstant(ZoneOffset.UTC));
-		setEndDate(val.getEndInstant(ZoneOffset.UTC));
-		setPrimaryTimeSeriesIdentifier(val.getPrimaryTimeseriesIdentifier());
+		setPrimaryTsIdentifier(val.getPrimaryTimeseriesIdentifier());
 	}
 }

@@ -1,6 +1,0 @@
-gov/usgs/aqcu/builder/DerivationChainReportBuilderTest.class
-gov/usgs/aqcu/builder/ReportUrlBuilderTest.class
-gov/usgs/aqcu/model/DerivationChainReportMetadataTest.class
-gov/usgs/aqcu/parameter/DerivationChainRequestParametersTest.class
-gov/usgs/aqcu/ControllerTest.class
-gov/usgs/aqcu/retrieval/TimeSeriesDescriptionListServiceTest.class
