@@ -1,8 +1,5 @@
 package gov.usgs.aqcu.parameter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DerivationChainRequestParameters extends ReportRequestParameters {
 
 	public DerivationChainRequestParameters() {

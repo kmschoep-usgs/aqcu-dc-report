@@ -1,11 +1,5 @@
 package gov.usgs.aqcu.model;
 
-import java.time.ZoneOffset;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.GradeMetadata;
-
 import gov.usgs.aqcu.parameter.DerivationChainRequestParameters;
 
 public class DerivationChainReportMetadata extends ReportMetadata {

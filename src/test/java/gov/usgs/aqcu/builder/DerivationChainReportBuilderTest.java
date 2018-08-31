@@ -20,6 +20,7 @@ import gov.usgs.aqcu.model.DerivationChainReport;
 import gov.usgs.aqcu.model.DerivationChainReportMetadata;
 import gov.usgs.aqcu.parameter.DerivationChainRequestParameters;
 import gov.usgs.aqcu.retrieval.AquariusRetrievalService;
+import gov.usgs.aqcu.retrieval.AsyncDerivationChainRetrievalService;
 import gov.usgs.aqcu.retrieval.DownchainProcessorListService;
 import gov.usgs.aqcu.retrieval.LocationDescriptionListService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
@@ -42,6 +43,8 @@ public class DerivationChainReportBuilderTest {
 	@MockBean 
 	private UpchainProcessorListService upchainService;
 	@MockBean
+	private AsyncDerivationChainRetrievalService asyncChainService;
+	@MockBean
 	private LocationDescriptionListService locService;
 	@MockBean
 	private TimeSeriesDescriptionListService descService;
@@ -61,7 +64,7 @@ public class DerivationChainReportBuilderTest {
 	public void setup() {
 		//Builder Servies
 		gson = AqcuGsonBuilderFactory.getConfiguredGsonBuilder().create();
-		service = new DerivationChainReportBuilderService(tsUidService,locService,descService,upchainService,downchainService);
+		service = new DerivationChainReportBuilderService(tsUidService,locService,descService,upchainService,downchainService,asyncChainService);
 
 		//Request Parameters
 		requestParams = new DerivationChainRequestParameters();

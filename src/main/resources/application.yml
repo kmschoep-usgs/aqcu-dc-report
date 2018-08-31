@@ -57,9 +57,9 @@ hystrix:
             timeoutInMilliseconds: ${hystrixThreadTimeout}
   threadpool:
     default:
-      maxQueueSize: ${hystrixMaxQueueSize:200}
-      queueSizeRejectionThreshold: ${hystrixMaxQueueSize:200}
-      coreSize: ${hystrixThreadPoolSize:10}
+      maxQueueSize: ${hystrixMaxQueueSize:800}
+      queueSizeRejectionThreshold: ${hystrixMaxQueueSize:800}
+      coreSize: ${hystrixThreadPoolSize:5}
 
 spring:
   profiles:
@@ -71,4 +71,4 @@ spring:
 
 logging:
   level:
-    gov.usgs.aqcu: DEBUG
+    gov.usgs.aqcu: INFO

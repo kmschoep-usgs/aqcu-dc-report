@@ -1,12 +1,6 @@
 package gov.usgs.aqcu;
 
-import java.util.List;
-import java.util.Set;
-
-import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Processor;
 import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,15 +17,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import gov.usgs.aqcu.builder.DerivationChainReportBuilderService;
 import gov.usgs.aqcu.client.JavaToRClient;
 import gov.usgs.aqcu.model.DerivationChainReport;
-import gov.usgs.aqcu.model.DerivationNode;
 import gov.usgs.aqcu.parameter.DerivationChainRequestParameters;;
 
 @RestController
 @RequestMapping("/derivationchain")
 public class Controller {
 	public static final String UNKNOWN_USERNAME = "unknown";
-
-	private static final Logger LOG = LoggerFactory.getLogger(Controller.class);
+	
 	private Gson gson;
 	private DerivationChainReportBuilderService reportBuilderService;
 	private JavaToRClient javaToRClient;
