@@ -61,6 +61,11 @@ hystrix:
       queueSizeRejectionThreshold: ${hystrixMaxQueueSize:800}
       coreSize: ${hystrixThreadPoolSize:5}
 
+asyncRetrieval:
+  corePoolSize: 10
+  maxPoolSize: -1
+  queueCapacity: -1
+
 spring:
   profiles:
     active: default, swagger

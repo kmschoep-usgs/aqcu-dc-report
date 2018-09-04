@@ -38,7 +38,7 @@ public class DerivationNode {
             parseProcessor(proc);
         }
 
-        //Optionsal
+        //Optional
         if(derivedTimeSeriesUniqueIds != null && !derivedTimeSeriesUniqueIds.isEmpty()) {
             this.derivedTimeSeriesUniqueIds = new ArrayList<>(derivedTimeSeriesUniqueIds);
         }
@@ -61,7 +61,7 @@ public class DerivationNode {
         this.subLocation = tsDesc.getSubLocationIdentifier();
         this.period = tsDesc.getComputationPeriodIdentifier();
         this.computation = tsDesc.getComputationIdentifier();
-        this.publish = tsDesc.isPublish().toString();
+        this.publish = tsDesc.isPublish() != null ? tsDesc.isPublish().toString() : Boolean.FALSE.toString();
         this.uniqueId = tsDesc.getUniqueId();
         this.primary = Boolean.valueOf(TimeSeriesUtils.isPrimaryTimeSeries(tsDesc)).toString();
     }
