@@ -62,9 +62,9 @@ hystrix:
       coreSize: ${hystrixThreadPoolSize:5}
 
 asyncRetrieval:
-  corePoolSize: 10
-  maxPoolSize: -1
-  queueCapacity: -1
+  corePoolSize: ${asyncRetrievalCorePoolSize:10}
+  maxPoolSize: ${asyncRetrievalMaxPoolSize:-1}
+  queueCapacity: ${asyncRetrievalQueueCapacity:-1}
 
 spring:
   profiles:
