@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import gov.usgs.aqcu.exception.AquariusRetrievalException;
 import gov.usgs.aqcu.model.DerivationNode;
 import gov.usgs.aqcu.retrieval.AsyncDerivationChainRetrievalService;
-import gov.usgs.aqcu.retrieval.DownchainProcessorListService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
 import gov.usgs.aqcu.retrieval.TimeSeriesUniqueIdListService;
 
@@ -36,18 +35,15 @@ public class DerivationChainBuilderService {
 
 	private TimeSeriesUniqueIdListService timeSeriesUniqueIdListService;
     private TimeSeriesDescriptionListService timeSeriesDescriptionListService;
-	private DownchainProcessorListService downchainProcessorListService;
 	private AsyncDerivationChainRetrievalService asyncDerivationChainRetirevalService;
 
 	@Autowired
 	public DerivationChainBuilderService(
 		TimeSeriesUniqueIdListService timeSeriesUniqueIdListService,
 		TimeSeriesDescriptionListService timeSeriesDescriptionListService,
-		DownchainProcessorListService downchainProcessorListService,
 		AsyncDerivationChainRetrievalService asyncDerivationChainRetirevalService) {
         this.timeSeriesUniqueIdListService = timeSeriesUniqueIdListService;
         this.timeSeriesDescriptionListService = timeSeriesDescriptionListService;
-		this.downchainProcessorListService = downchainProcessorListService;
 		this.asyncDerivationChainRetirevalService = asyncDerivationChainRetirevalService;
     }
     
@@ -155,7 +151,7 @@ public class DerivationChainBuilderService {
 	 */
 	protected boolean listContainsEquivalentProcessor(List<Processor> procList, Processor procCheck) {
 		for(Processor tsProc : procList) {
-			if(areTimeRangesEquivalent(tsProc.getProcessorPeriod(), procCheck.getProcessorPeriod())) {
+			if(areTimeRangesEquivalent(tsProc.getProcessorPeriod(), procCheck.getProcessorPeriod()) && tsProc.getOutputTimeSeriesUniqueId().equals(procCheck.getOutputTimeSeriesUniqueId())) {
 				return true;
 			}
 		}
@@ -169,33 +165,36 @@ public class DerivationChainBuilderService {
 	protected Map<String, TimeSeriesDescription> getTimeSeriesDesciprionMap(List<String> tsIdList) {
 		//According to AQ's API docus this is limited to "roughly" 60 items per request, so need to batch
 		List<TimeSeriesDescription> tsDescs = new ArrayList<>();
+		Map<String,TimeSeriesDescription> tsDescMap = new HashMap<>();
 		int startIndex = 0;
 		int endIndex = 0;
 
-		do {
-			startIndex = endIndex;
-			endIndex += MAX_TS_DESC_QUERY_SIZE;
-
-			//Bound indicies
-			if(startIndex > tsIdList.size()-1) {
-				startIndex = tsIdList.size()-1;
-				endIndex = tsIdList.size();
-			} else if(endIndex > tsIdList.size()) {
-				endIndex = tsIdList.size();
+		if(!tsIdList.isEmpty()) {
+			do {
+				startIndex = endIndex;
+				endIndex += MAX_TS_DESC_QUERY_SIZE;
+	
+				//Bound indicies
+				if(startIndex > tsIdList.size()-1) {
+					startIndex = tsIdList.size()-1;
+					endIndex = tsIdList.size();
+				} else if(endIndex > tsIdList.size()) {
+					endIndex = tsIdList.size();
+				}
+	
+				//Do fetch
+				LOG.debug("Fetching " + (endIndex - startIndex) + " Time Series Descriptions.\nRemaining to fetch: " + (tsIdList.size()-endIndex));
+				tsDescs.addAll(timeSeriesDescriptionListService.getTimeSeriesDescriptionList(tsIdList.subList(startIndex, endIndex)));
+			}while(endIndex < tsIdList.size());
+	
+			//Validate that all Descriptions were recieved
+			if(tsIdList.size() != tsDescs.size()) {
+				throw new AquariusRetrievalException("Did not recieve all requested Time Series Descriptions! Requested: " + tsIdList.size() + " | Recieved: " + tsDescs.size());
 			}
-
-			//Do fetch
-			LOG.debug("Fetching " + (endIndex - startIndex) + " Time Series Descriptions.\nRemaining to fetch: " + (tsIdList.size()-endIndex));
-			tsDescs.addAll(timeSeriesDescriptionListService.getTimeSeriesDescriptionList(tsIdList.subList(startIndex, endIndex)));
-		}while(endIndex < tsIdList.size());
-
-		//Validate that all Descriptions were recieved
-		if(tsIdList.size() != tsDescs.size()) {
-			throw new AquariusRetrievalException("Did not recieve all requested Time Series Descriptions! Requested: " + tsIdList.size() + " | Recieved: " + tsDescs.size());
+	
+			//Stream to map indexed by TS UID
+			tsDescMap = tsDescs.stream().collect(Collectors.toMap(TimeSeriesDescription::getUniqueId,Function.identity()));
 		}
-
-		//Stream to map indexed by TS UID
-		Map<String,TimeSeriesDescription> tsDescMap = tsDescs.stream().collect(Collectors.toMap(TimeSeriesDescription::getUniqueId,Function.identity()));
 		
 		return tsDescMap;
 	}

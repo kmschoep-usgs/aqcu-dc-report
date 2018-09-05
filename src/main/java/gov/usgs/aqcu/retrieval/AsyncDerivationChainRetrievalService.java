@@ -13,7 +13,7 @@ import gov.usgs.aqcu.retrieval.DownchainProcessorListService;
 import gov.usgs.aqcu.retrieval.UpchainProcessorListService;
 
 /**
- * Serivce which asynchronously traverses derivation chains
+ * Serivce which asynchronously makes upchain and downchain processor list requests
  */
 @Service
 public class AsyncDerivationChainRetrievalService {

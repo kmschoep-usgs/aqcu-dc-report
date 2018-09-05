@@ -1,28 +1,37 @@
 package gov.usgs.aqcu.builder;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.when;
+import static org.mockito.Matchers.any;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import gov.usgs.aqcu.exception.AquariusRetrievalException;
 import gov.usgs.aqcu.model.DerivationNode;
 import gov.usgs.aqcu.retrieval.AsyncDerivationChainRetrievalService;
-import gov.usgs.aqcu.retrieval.DownchainProcessorListService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
 import gov.usgs.aqcu.retrieval.TimeSeriesUniqueIdListService;
 import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Processor;
@@ -37,39 +46,50 @@ public class DerivationChainBuilderTest {
 	@MockBean
 	private TimeSeriesDescriptionListService descService;
 	@MockBean
-	private DownchainProcessorListService downProcService;
-	@MockBean
 	private AsyncDerivationChainRetrievalService asyncService;
 
 	private DerivationChainBuilderService service;
 
 	CompletableFuture<List<Processor>> mockEmptyFuture = new CompletableFuture<>();
-	List<String> fullIdList = Arrays.asList("R", "D1", "D2", "U1", "U2", "UU", "UD", "DU", "DD", "UUU", "UUD", "UDU", "UDD", "DUU", "DUD", "DDU", "DDD");
-	Processor procRA = new Processor();
-	Processor procU1A = new Processor();
+	List<String> fullIdList = Arrays.asList("R", "D1", "D2", "U1", "U2", "U3", "UU1", "UU2", "UD", "DU", "DD", "UUU", "UUD1", "UUD2", "UDU", "UDD", "DUU", "DUD", "DDU", "DDD");
+	List<TimeSeriesDescription> fullDescList;
+
+	Processor procRC = new Processor();
+	Processor procU1C = new Processor();
 	Processor procU2A = new Processor();
+	Processor procU2B = new Processor();
+	Processor procU3B = new Processor();
 	Processor procD1A = new Processor();
+	Processor procD1B = new Processor();
 	Processor procD2A = new Processor();
-	Processor procUUA = new Processor();
+	Processor procD2B = new Processor();
+	Processor procUU1A = new Processor();
+	Processor procUU2B = new Processor();
 	Processor procUDA = new Processor();
+	Processor procUDB = new Processor();
 	Processor procDUA = new Processor();
 	Processor procDDA = new Processor();
-	Processor procUUDA = new Processor();
+	Processor procDDB = new Processor();
+	Processor procUUD1A = new Processor();
+	Processor procUUD2B = new Processor();
 	Processor procUDDA = new Processor();
 	Processor procDUDA = new Processor();
-	Processor procDDDA = new Processor();
+	Processor procDDDC = new Processor();
 
 	TimeSeriesDescription descR = new TimeSeriesDescription();
 	TimeSeriesDescription descU1 = new TimeSeriesDescription();
 	TimeSeriesDescription descU2 = new TimeSeriesDescription();
+	TimeSeriesDescription descU3 = new TimeSeriesDescription();
 	TimeSeriesDescription descD1 = new TimeSeriesDescription();
 	TimeSeriesDescription descD2 = new TimeSeriesDescription();
-	TimeSeriesDescription descUU = new TimeSeriesDescription();
+	TimeSeriesDescription descUU1 = new TimeSeriesDescription();
+	TimeSeriesDescription descUU2 = new TimeSeriesDescription();
 	TimeSeriesDescription descUD = new TimeSeriesDescription();
 	TimeSeriesDescription descDU = new TimeSeriesDescription();
 	TimeSeriesDescription descDD = new TimeSeriesDescription();
 	TimeSeriesDescription descUUU = new TimeSeriesDescription();
-	TimeSeriesDescription descUUD = new TimeSeriesDescription();
+	TimeSeriesDescription descUUD1 = new TimeSeriesDescription();
+	TimeSeriesDescription descUUD2 = new TimeSeriesDescription();
 	TimeSeriesDescription descUDU = new TimeSeriesDescription();
 	TimeSeriesDescription descUDD = new TimeSeriesDescription();
 	TimeSeriesDescription descDUU = new TimeSeriesDescription();
@@ -81,28 +101,10 @@ public class DerivationChainBuilderTest {
 	TimeRange procPeriodB;
 	TimeRange procPeriodC;
 
-	DerivationNode nodeRA;
-	DerivationNode nodeU1A;
-	DerivationNode nodeU2A;
-	DerivationNode nodeD1A;
-	DerivationNode nodeD2A;
-	DerivationNode nodeUUA;
-	DerivationNode nodeUDA;
-	DerivationNode nodeDUA;
-	DerivationNode nodeDDA;
-	DerivationNode nodeUUUA;
-	DerivationNode nodeUUDA;
-	DerivationNode nodeUDUA;
-	DerivationNode nodeUDDA;
-	DerivationNode nodeDUUA;
-	DerivationNode nodeDUDA;
-	DerivationNode nodeDDUA;
-	DerivationNode nodeDDDA;
-
 	@Before
 	public void setup() {
 		//Builder Service
-		service = new DerivationChainBuilderService(tsUidsService, descService, downProcService, asyncService);
+		service = new DerivationChainBuilderService(tsUidsService, descService, asyncService);
 
 		mockEmptyFuture.obtrudeValue(new ArrayList<>());
 
@@ -114,111 +116,129 @@ public class DerivationChainBuilderTest {
 		procPeriodB.setStartTime(Instant.parse("2017-01-01T00:00:00Z"));
 		procPeriodB.setEndTime(Instant.parse("2018-01-01T00:00:00Z"));
 		procPeriodC = new TimeRange();
-		procPeriodC.setStartTime(Instant.parse("2018-01-01T00:00:00Z"));
-		procPeriodC.setEndTime(Instant.parse("2019-01-01T00:00:00Z"));
+		procPeriodC.setStartTime(Instant.parse("2016-01-01T00:00:00Z"));
+		procPeriodC.setEndTime(Instant.parse("2018-01-01T00:00:00Z"));
 
 		//Build test chain Processors
-		procRA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("U1", "U2")));
-		procRA.setOutputTimeSeriesUniqueId("R");
-		procRA.setProcessorPeriod(procPeriodA);
-		procU1A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UU")));
-		procU1A.setOutputTimeSeriesUniqueId("U1");
-		procU1A.setProcessorPeriod(procPeriodA);
-		procU2A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UU")));
+		procRC.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("U1", "U2", "U3")));
+		procRC.setOutputTimeSeriesUniqueId("R");
+		procRC.setProcessorPeriod(procPeriodC);
+		procU1C.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UU1")));
+		procU1C.setOutputTimeSeriesUniqueId("U1");
+		procU1C.setProcessorPeriod(procPeriodC);
+		procU2A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UU1")));
 		procU2A.setOutputTimeSeriesUniqueId("U2");
 		procU2A.setProcessorPeriod(procPeriodA);
+		procU2B.setInputTimeSeriesUniqueIds(new ArrayList<>());
+		procU2B.setOutputTimeSeriesUniqueId("U2");
+		procU2B.setProcessorPeriod(procPeriodB);
+		procU3B.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UU2")));
+		procU3B.setOutputTimeSeriesUniqueId("U3");
+		procU3B.setProcessorPeriod(procPeriodB);
 		procD1A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("R", "DU")));
 		procD1A.setOutputTimeSeriesUniqueId("D1");
 		procD1A.setProcessorPeriod(procPeriodA);
+		procD1B.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("R")));
+		procD1B.setOutputTimeSeriesUniqueId("D1");
+		procD1B.setProcessorPeriod(procPeriodB);
 		procD2A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("R")));
 		procD2A.setOutputTimeSeriesUniqueId("D2");
 		procD2A.setProcessorPeriod(procPeriodA);
-		procUUA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UUU")));
-		procUUA.setOutputTimeSeriesUniqueId("UU");
-		procUUA.setProcessorPeriod(procPeriodA);
+		procD2B.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("R")));
+		procD2B.setOutputTimeSeriesUniqueId("D2");
+		procD2B.setProcessorPeriod(procPeriodB);
+		procUU1A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UUU")));
+		procUU1A.setOutputTimeSeriesUniqueId("UU1");
+		procUU1A.setProcessorPeriod(procPeriodA);
+		procUU2B.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UUU")));
+		procUU2B.setOutputTimeSeriesUniqueId("UU2");
+		procUU2B.setProcessorPeriod(procPeriodA);
 		procUDA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("U2", "UDU")));
 		procUDA.setOutputTimeSeriesUniqueId("UD");
 		procUDA.setProcessorPeriod(procPeriodA);
+		procUDB.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("U2")));
+		procUDB.setOutputTimeSeriesUniqueId("UD");
+		procUDB.setProcessorPeriod(procPeriodB);
 		procDUA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("DUU")));
 		procDUA.setOutputTimeSeriesUniqueId("DU");
 		procDUA.setProcessorPeriod(procPeriodA);
 		procDDA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("D1", "D2", "DDU")));
 		procDDA.setOutputTimeSeriesUniqueId("DD");
 		procDDA.setProcessorPeriod(procPeriodA);
-		procUUDA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UU")));
-		procUUDA.setOutputTimeSeriesUniqueId("UUD");
-		procUUDA.setProcessorPeriod(procPeriodA);
+		procDDB.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("D1", "D2")));
+		procDDB.setOutputTimeSeriesUniqueId("DD");
+		procDDB.setProcessorPeriod(procPeriodB);
+		procUUD1A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UU1")));
+		procUUD1A.setOutputTimeSeriesUniqueId("UUD1");
+		procUUD1A.setProcessorPeriod(procPeriodA);
+		procUUD2B.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UU2")));
+		procUUD2B.setOutputTimeSeriesUniqueId("UUD2");
+		procUUD2B.setProcessorPeriod(procPeriodB);
 		procUDDA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UD")));
 		procUDDA.setOutputTimeSeriesUniqueId("UDD");
 		procUDDA.setProcessorPeriod(procPeriodA);
 		procDUDA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("DU")));
 		procDUDA.setOutputTimeSeriesUniqueId("DUD");
 		procDUDA.setProcessorPeriod(procPeriodA);
-		procDDDA.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("DD")));
-		procDDDA.setOutputTimeSeriesUniqueId("DDD");
-		procDDDA.setProcessorPeriod(procPeriodA);
+		procDDDC.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("DD")));
+		procDDDC.setOutputTimeSeriesUniqueId("DDD");
+		procDDDC.setProcessorPeriod(procPeriodA);
 
 		//Build test chain Descriptions
 		descR.setUniqueId("R");
 		descU1.setUniqueId("U1");
 		descU2.setUniqueId("U2");
+		descU3.setUniqueId("U3");
 		descD1.setUniqueId("D1");
 		descD2.setUniqueId("D2");
-		descUU.setUniqueId("UU");
+		descUU1.setUniqueId("UU1");
+		descUU2.setUniqueId("UU2");
 		descUD.setUniqueId("UD");
 		descDU.setUniqueId("DU");
 		descDD.setUniqueId("DD");
 		descUUU.setUniqueId("UUU");
-		descUUD.setUniqueId("UUD");
+		descUUD1.setUniqueId("UUD1");
+		descUUD2.setUniqueId("UUD2");
 		descUDU.setUniqueId("UDU");
 		descUDD.setUniqueId("UDD");
 		descDUU.setUniqueId("DUU");
 		descDUD.setUniqueId("DUD");
 		descDDU.setUniqueId("DDU");
 		descDDD.setUniqueId("DDD");
+		fullDescList = Arrays.asList(descR, descU1, descU2, descU3, descD1, descD2, descUU1, descUU2, descUD, descDU, descDD, descUUU, descUUD1, descUUD2, descUDU, descUDD, descDUU, descDUD, descDDU, descDDD);
 
-		//Build test chain DerivationNodes
-		nodeRA = new DerivationNode(procRA, descR, new HashSet<>(Arrays.asList("D1", "D2")));
-		nodeU1A = new DerivationNode(procU1A, descU1, new HashSet<>(Arrays.asList("R")));
-		nodeU2A = new DerivationNode(procU2A, descU2, new HashSet<>(Arrays.asList("R", "UD")));
-		nodeD1A = new DerivationNode(procD1A, descD1, new HashSet<>(Arrays.asList("DD")));
-		nodeD2A = new DerivationNode(procD2A, descD2, new HashSet<>(Arrays.asList("DD")));
-		nodeUUA = new DerivationNode(procUUA, descUU, new HashSet<>(Arrays.asList("U1", "U2", "UUD")));
-		nodeUDA = new DerivationNode(procUDA, descUD, new HashSet<>(Arrays.asList("UDD")));
-		nodeDUA = new DerivationNode(procDUA, descDU, new HashSet<>(Arrays.asList("DUD", "D1")));
-		nodeDDA = new DerivationNode(procDDA, descDD, new HashSet<>(Arrays.asList("DDD")));
-		nodeUUUA = new DerivationNode(null, descUUU, new HashSet<>(Arrays.asList("UU")));
-		nodeUUDA = new DerivationNode(procUUDA, descUUD, new HashSet<>(Arrays.asList()));
-		nodeUDUA = new DerivationNode(null, descUDU, new HashSet<>(Arrays.asList("UD")));
-		nodeUDDA = new DerivationNode(procUDDA, descUDD, new HashSet<>(Arrays.asList()));
-		nodeDUUA = new DerivationNode(null, descDUU, new HashSet<>(Arrays.asList("DU")));
-		nodeDUDA = new DerivationNode(procDUDA, descDUD, new HashSet<>(Arrays.asList()));
-		nodeDDUA = new DerivationNode(null, descDDU, new HashSet<>(Arrays.asList("DD")));
-		nodeDDDA = new DerivationNode(procDDDA, descDDD, new HashSet<>(Arrays.asList()));
+		setupProcResponses();
+	}
 
-		//Build test chain async responses
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockAsyncProcs(Arrays.asList(procRA)));
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockAsyncProcs(Arrays.asList(procD1A, procD2A)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("U1")).willReturn(mockAsyncProcs(Arrays.asList(procU1A)));
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("U1")).willReturn(mockAsyncProcs(Arrays.asList(procRA)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("U2")).willReturn(mockAsyncProcs(Arrays.asList(procU2A)));
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("U2")).willReturn(mockAsyncProcs(Arrays.asList(procRA, procUDA)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("D1")).willReturn(mockAsyncProcs(Arrays.asList(procD1A)));
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("D1")).willReturn(mockAsyncProcs(Arrays.asList(procDDA)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("D2")).willReturn(mockAsyncProcs(Arrays.asList(procD2A)));
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("D2")).willReturn(mockAsyncProcs(Arrays.asList(procDDA)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UU")).willReturn(mockAsyncProcs(Arrays.asList(procUUA)));
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UU")).willReturn(mockAsyncProcs(Arrays.asList(procU1A, procU2A, procUUDA)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UD")).willReturn(mockAsyncProcs(Arrays.asList(procUDA)));
+	public void setupProcResponses() {
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockAsyncProcs(Arrays.asList(procRC)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("U1")).willReturn(mockAsyncProcs(Arrays.asList(procU1C)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("U1")).willReturn(mockAsyncProcs(Arrays.asList(procRC)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("U2")).willReturn(mockAsyncProcs(Arrays.asList(procU2A, procU2B)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("U2")).willReturn(mockAsyncProcs(Arrays.asList(procRC, procUDA, procUDB)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("U3")).willReturn(mockAsyncProcs(Arrays.asList(procU3B)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("U3")).willReturn(mockAsyncProcs(Arrays.asList(procRC)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("D1")).willReturn(mockAsyncProcs(Arrays.asList(procD1A, procD1B)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("D1")).willReturn(mockAsyncProcs(Arrays.asList(procDDA, procDDB)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("D2")).willReturn(mockAsyncProcs(Arrays.asList(procD2A, procD2B)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("D2")).willReturn(mockAsyncProcs(Arrays.asList(procDDA, procDDB)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UU1")).willReturn(mockAsyncProcs(Arrays.asList(procUU1A)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UU1")).willReturn(mockAsyncProcs(Arrays.asList(procU1C, procU2A, procUUD1A)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UU2")).willReturn(mockAsyncProcs(Arrays.asList(procUU2B)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UU2")).willReturn(mockAsyncProcs(Arrays.asList(procU3B, procUUD2B)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UD")).willReturn(mockAsyncProcs(Arrays.asList(procUDA, procUDB)));
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UD")).willReturn(mockAsyncProcs(Arrays.asList(procUDDA)));
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("DU")).willReturn(mockAsyncProcs(Arrays.asList(procDUA)));
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("DU")).willReturn(mockAsyncProcs(Arrays.asList(procDUDA, procD1A)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("DD")).willReturn(mockAsyncProcs(Arrays.asList(procDDA)));
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("DD")).willReturn(mockAsyncProcs(Arrays.asList(procDDDA)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("DD")).willReturn(mockAsyncProcs(Arrays.asList(procDDA, procDDB)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("DD")).willReturn(mockAsyncProcs(Arrays.asList(procDDDC)));
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UUU")).willReturn(mockEmptyFuture);
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UUU")).willReturn(mockAsyncProcs(Arrays.asList(procUUA)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UUD")).willReturn(mockAsyncProcs(Arrays.asList(procUUDA)));
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UUD")).willReturn(mockEmptyFuture);
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UUU")).willReturn(mockAsyncProcs(Arrays.asList(procUU1A, procUU2B)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UUD1")).willReturn(mockAsyncProcs(Arrays.asList(procUUD1A)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UUD1")).willReturn(mockEmptyFuture);
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UUD2")).willReturn(mockAsyncProcs(Arrays.asList(procUUD2B)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UUD2")).willReturn(mockEmptyFuture);
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UDU")).willReturn(mockEmptyFuture);
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("UDU")).willReturn(mockAsyncProcs(Arrays.asList(procUDA)));
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("UDD")).willReturn(mockAsyncProcs(Arrays.asList(procUDDA)));
@@ -228,41 +248,169 @@ public class DerivationChainBuilderTest {
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("DUD")).willReturn(mockAsyncProcs(Arrays.asList(procDUDA)));
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("DUD")).willReturn(mockEmptyFuture);
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("DDU")).willReturn(mockEmptyFuture);
-		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("DDU")).willReturn(mockAsyncProcs(Arrays.asList(procDDA)));
-		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("DDD")).willReturn(mockAsyncProcs(Arrays.asList(procDDDA)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("DDU")).willReturn(mockAsyncProcs(Arrays.asList(procDDA, procDDB)));
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("DDD")).willReturn(mockAsyncProcs(Arrays.asList(procDDDC)));
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("DDD")).willReturn(mockEmptyFuture);
 	}
 
+	public void setupDescResponses() {
+	}
+
 	@Test
-	public void getRecursiveProcessorMapInclusiveSingleTimesTest() {
+	public void getRecursiveProcessorMapNoUpTest() {
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockEmptyFuture);
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
 		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", fullIdList);
 		assertTrue(result != null);
 		assertTrue(!result.isEmpty());
-		assertEquals(17, result.keySet().size());
-		assertEquals(17, result.values().size());
-		assertThat(result.keySet(), containsInAnyOrder(fullIdList.toArray()));
+		assertEquals(9, result.keySet().size());
+		assertEquals(9, result.values().size());
+		assertThat(result.keySet(), containsInAnyOrder("R", "D1", "D2", "DU", "DD", "DUU", "DUD", "DDU", "DDD"));
 		assertTrue(result.get("R") != null);
-		assertThat(result.get("R"), containsInAnyOrder(procRA));
-		assertTrue(result.get("U1") != null);
-		assertThat(result.get("U1"), containsInAnyOrder(procU1A));
-		assertTrue(result.get("U2") != null);
-		assertThat(result.get("U2"), containsInAnyOrder(procU2A));
+		assertTrue(result.get("R").isEmpty());
+		assertTrue(result.get("U1") == null);
+		assertTrue(result.get("U2") == null);
+		assertTrue(result.get("U3") == null);
 		assertTrue(result.get("D1") != null);
-		assertThat(result.get("D1"), containsInAnyOrder(procD1A));
+		assertThat(result.get("D1"), containsInAnyOrder(procD1A, procD1B));
 		assertTrue(result.get("D2") != null);
-		assertThat(result.get("D2"), containsInAnyOrder(procD2A));
-		assertTrue(result.get("UU") != null);
-		assertThat(result.get("UU"), containsInAnyOrder(procUUA));
-		assertTrue(result.get("UD") != null);
-		assertThat(result.get("UD"), containsInAnyOrder(procUDA));
+		assertThat(result.get("D2"), containsInAnyOrder(procD2A, procD2B));
+		assertTrue(result.get("UU1") == null);
+		assertTrue(result.get("UU2") == null);
+		assertTrue(result.get("UD") == null);
 		assertTrue(result.get("DU") != null);
 		assertThat(result.get("DU"), containsInAnyOrder(procDUA));
 		assertTrue(result.get("DD") != null);
-		assertThat(result.get("DD"), containsInAnyOrder(procDDA));
+		assertThat(result.get("DD"), containsInAnyOrder(procDDA, procDDB));
+		assertTrue(result.get("UUU") == null);
+		assertTrue(result.get("UUD1") == null);
+		assertTrue(result.get("UUD2") == null);
+		assertTrue(result.get("UDU") == null);
+		assertTrue(result.get("UDD") == null);
+		assertTrue(result.get("DUU") != null);
+		assertTrue(result.get("DUU").isEmpty());
+		assertTrue(result.get("DUD") != null);
+		assertThat(result.get("DUD"), containsInAnyOrder(procDUDA));
+		assertTrue(result.get("DDU") != null);
+		assertTrue(result.get("DDU").isEmpty());
+		assertTrue(result.get("DDD") != null);
+		assertThat(result.get("DDD"), containsInAnyOrder(procDDDC));
+	}
+
+	@Test
+	public void getRecursiveProcessorMapNoDownTest() {
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockAsyncProcs(Arrays.asList(procRC)));
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockEmptyFuture);
+		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", fullIdList);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(12, result.keySet().size());
+		assertEquals(12, result.values().size());
+		assertThat(result.keySet(), containsInAnyOrder("R", "U1", "U2", "U3", "UU1", "UU2", "UD", "UUU", "UUD1", "UUD2", "UDU", "UDD"));
+		assertTrue(result.get("R") != null);
+		assertThat(result.get("R"), containsInAnyOrder(procRC));
+		assertTrue(result.get("U1") != null);
+		assertThat(result.get("U1"), containsInAnyOrder(procU1C));
+		assertTrue(result.get("U2") != null);
+		assertThat(result.get("U2"), containsInAnyOrder(procU2A, procU2B));
+		assertTrue(result.get("U3") != null);
+		assertThat(result.get("U3"), containsInAnyOrder(procU3B));
+		assertTrue(result.get("D1") == null);
+		assertTrue(result.get("D2") == null);
+		assertTrue(result.get("UU1") != null);
+		assertThat(result.get("UU1"), containsInAnyOrder(procUU1A));
+		assertTrue(result.get("UU2") != null);
+		assertThat(result.get("UU2"), containsInAnyOrder(procUU2B));
+		assertTrue(result.get("UD") != null);
+		assertThat(result.get("UD"), containsInAnyOrder(procUDA, procUDB));
+		assertTrue(result.get("DU") == null);
+		assertTrue(result.get("DD") == null);
 		assertTrue(result.get("UUU") != null);
 		assertTrue(result.get("UUU").isEmpty());
-		assertTrue(result.get("UUD") != null);
-		assertThat(result.get("UUD"), containsInAnyOrder(procUUDA));
+		assertTrue(result.get("UUD1") != null);
+		assertThat(result.get("UUD1"), containsInAnyOrder(procUUD1A));
+		assertTrue(result.get("UUD2") != null);
+		assertThat(result.get("UUD2"), containsInAnyOrder(procUUD2B));
+		assertTrue(result.get("UDU") != null);
+		assertTrue(result.get("UDU").isEmpty());
+		assertTrue(result.get("UDD") != null);
+		assertThat(result.get("UDD"), containsInAnyOrder(procUDDA));
+		assertTrue(result.get("DUU") == null);
+		assertTrue(result.get("DUD") == null);
+		assertTrue(result.get("DDU") == null);
+		assertTrue(result.get("DDD") == null);
+		
+	}
+
+	@Test
+	public void getRecursiveProcessorMapNoUpOrDownTest() {
+		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockEmptyFuture);
+		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockEmptyFuture);
+		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", fullIdList);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(1, result.keySet().size());
+		assertEquals(1, result.values().size());
+		assertThat(result.keySet(), containsInAnyOrder("R"));
+		assertTrue(result.get("R") != null);
+		assertTrue(result.get("R").isEmpty());
+		assertTrue(result.get("U1") == null);
+		assertTrue(result.get("U2") == null);
+		assertTrue(result.get("U3") == null);
+		assertTrue(result.get("D1") == null);
+		assertTrue(result.get("D2") == null);
+		assertTrue(result.get("UU1") == null);
+		assertTrue(result.get("UU2") == null);
+		assertTrue(result.get("UD") == null);
+		assertTrue(result.get("DU") == null);
+		assertTrue(result.get("DD") == null);
+		assertTrue(result.get("UUU") == null);
+		assertTrue(result.get("UUD1") == null);
+		assertTrue(result.get("UUD2") == null);
+		assertTrue(result.get("UDU") == null);
+		assertTrue(result.get("UDD") == null);
+		assertTrue(result.get("DUU") == null);
+		assertTrue(result.get("DUD") == null);
+		assertTrue(result.get("DDU") == null);
+		assertTrue(result.get("DDD") == null);
+	}
+
+	@Test
+	public void getRecursiveProcessorMapInclusiveTest() {
+		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", fullIdList);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(20, result.keySet().size());
+		assertEquals(20, result.values().size());
+		assertThat(result.keySet(), containsInAnyOrder(fullIdList.toArray()));
+		assertTrue(result.get("R") != null);
+		assertThat(result.get("R"), containsInAnyOrder(procRC));
+		assertTrue(result.get("U1") != null);
+		assertThat(result.get("U1"), containsInAnyOrder(procU1C));
+		assertTrue(result.get("U2") != null);
+		assertThat(result.get("U2"), containsInAnyOrder(procU2A, procU2B));
+		assertTrue(result.get("U3") != null);
+		assertThat(result.get("U3"), containsInAnyOrder(procU3B));
+		assertTrue(result.get("D1") != null);
+		assertThat(result.get("D1"), containsInAnyOrder(procD1A, procD1B));
+		assertTrue(result.get("D2") != null);
+		assertThat(result.get("D2"), containsInAnyOrder(procD2A, procD2B));
+		assertTrue(result.get("UU1") != null);
+		assertThat(result.get("UU1"), containsInAnyOrder(procUU1A));
+		assertTrue(result.get("UU2") != null);
+		assertThat(result.get("UU2"), containsInAnyOrder(procUU2B));
+		assertTrue(result.get("UD") != null);
+		assertThat(result.get("UD"), containsInAnyOrder(procUDA, procUDB));
+		assertTrue(result.get("DU") != null);
+		assertThat(result.get("DU"), containsInAnyOrder(procDUA));
+		assertTrue(result.get("DD") != null);
+		assertThat(result.get("DD"), containsInAnyOrder(procDDA, procDDB));
+		assertTrue(result.get("UUU") != null);
+		assertTrue(result.get("UUU").isEmpty());
+		assertTrue(result.get("UUD1") != null);
+		assertThat(result.get("UUD1"), containsInAnyOrder(procUUD1A));
+		assertTrue(result.get("UUD2") != null);
+		assertThat(result.get("UUD2"), containsInAnyOrder(procUUD2B));
 		assertTrue(result.get("UDU") != null);
 		assertTrue(result.get("UDU").isEmpty());
 		assertTrue(result.get("UDD") != null);
@@ -274,47 +422,363 @@ public class DerivationChainBuilderTest {
 		assertTrue(result.get("DDU") != null);
 		assertTrue(result.get("DDU").isEmpty());
 		assertTrue(result.get("DDD") != null);
-		assertThat(result.get("DDD"), containsInAnyOrder(procDDDA));
+		assertThat(result.get("DDD"), containsInAnyOrder(procDDDC));
 	}
 
 	@Test
-	public void getRecursiveProcessorMapLimitedSingleTimesTest() {
-		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", Arrays.asList("R", "U1", "U2", "D1", "D2", "UU", "DD", "UUU", "DDD"));
+	public void getRecursiveProcessorMapLimitedTest() {
+		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", Arrays.asList("R", "U1", "U2", "D1", "D2", "UU1", "DD", "UUU", "DDD"));
 		assertTrue(result != null);
 		assertTrue(!result.isEmpty());
-		assertEquals(13, result.keySet().size());
-		assertEquals(13, result.values().size());
-		assertThat(result.keySet(), containsInAnyOrder("R", "U1", "U2", "D1", "D2", "UU", "UD", "DU", "DD", "UUU", "UUD", "DDU", "DDD"));
+		assertEquals(15, result.keySet().size());
+		assertEquals(15, result.values().size());
+		assertThat(result.keySet(), containsInAnyOrder("R", "U1", "U2", "U3", "D1", "D2", "UU1", "UU2", "UD", "DU", "DD", "UUU", "UUD1", "DDU", "DDD"));
 		assertTrue(result.get("R") != null);
-		assertThat(result.get("R"), containsInAnyOrder(procRA));
+		assertThat(result.get("R"), containsInAnyOrder(procRC));
 		assertTrue(result.get("U1") != null);
-		assertThat(result.get("U1"), containsInAnyOrder(procU1A));
+		assertThat(result.get("U1"), containsInAnyOrder(procU1C));
 		assertTrue(result.get("U2") != null);
-		assertThat(result.get("U2"), containsInAnyOrder(procU2A));
+		assertThat(result.get("U2"), containsInAnyOrder(procU2A, procU2B));
+		assertTrue(result.get("U3") != null);
+		assertThat(result.get("U3"), containsInAnyOrder(procU3B));
 		assertTrue(result.get("D1") != null);
-		assertThat(result.get("D1"), containsInAnyOrder(procD1A));
+		assertThat(result.get("D1"), containsInAnyOrder(procD1A, procD1B));
 		assertTrue(result.get("D2") != null);
-		assertThat(result.get("D2"), containsInAnyOrder(procD2A));
-		assertTrue(result.get("UU") != null);
-		assertThat(result.get("UU"), containsInAnyOrder(procUUA));
+		assertThat(result.get("D2"), containsInAnyOrder(procD2A, procD2B));
+		assertTrue(result.get("UU1") != null);
+		assertThat(result.get("UU1"), containsInAnyOrder(procUU1A));
+		assertTrue(result.get("UU2") != null);
+		assertThat(result.get("UU2"), containsInAnyOrder(procUU2B));
 		assertTrue(result.get("UD") != null);
-		assertThat(result.get("UD"), containsInAnyOrder(procUDA));
+		assertThat(result.get("UD"), containsInAnyOrder(procUDA, procUDB));
 		assertTrue(result.get("DU") != null);
 		assertThat(result.get("DU"), containsInAnyOrder(procDUA));
 		assertTrue(result.get("DD") != null);
-		assertThat(result.get("DD"), containsInAnyOrder(procDDA));
+		assertThat(result.get("DD"), containsInAnyOrder(procDDA, procDDB));
 		assertTrue(result.get("UUU") != null);
 		assertTrue(result.get("UUU").isEmpty());
-		assertTrue(result.get("UUD") != null);
-		assertThat(result.get("UUD"), containsInAnyOrder(procUUDA));
+		assertTrue(result.get("UUD1") != null);
+		assertThat(result.get("UUD1"), containsInAnyOrder(procUUD1A));
+		assertTrue(result.get("UUD2") == null);
 		assertTrue(result.get("UDU") == null);
 		assertTrue(result.get("UDD") == null);
 		assertTrue(result.get("DUU") == null);
 		assertTrue(result.get("DUD") == null);
 		assertTrue(result.get("DDU") != null);
+		assertTrue(result.get("DDU") != null);
 		assertTrue(result.get("DDU").isEmpty());
 		assertTrue(result.get("DDD") != null);
-		assertThat(result.get("DDD"), containsInAnyOrder(procDDDA));
+		assertThat(result.get("DDD"), containsInAnyOrder(procDDDC));
+	}
+
+	@Test
+	public void listContainsEquivalentProcessorTest() {
+		List<Processor> procList1 = Arrays.asList(procD1A, procD1B, procD2A);
+		Processor sameRangeAndOutputDifferentInputD1A = new Processor();
+		Processor sameRangeAndOutputDifferentInputD1B = new Processor();
+		Processor sameRangeAndOutputDifferentInputD2A = new Processor();
+		Processor sameRangeAndOutputDifferentInputD2B = new Processor();
+		Processor sameRangeDifferentOutputD1A = new Processor();
+		Processor sameRangeDifferentOutputD1B = new Processor();
+		Processor sameRangeDifferentOutputD2A = new Processor();
+		Processor sameRangeDifferentOutputD2B = new Processor();
+		Processor differentRangeSameOutputD1AB = new Processor();
+		Processor differentRangeSameOutputD2AB = new Processor();
+		sameRangeAndOutputDifferentInputD1A.setProcessorPeriod(procPeriodA);
+		sameRangeAndOutputDifferentInputD1A.setOutputTimeSeriesUniqueId("D1");
+		sameRangeAndOutputDifferentInputD1A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UUU", "UU1", "UU2")));
+		sameRangeAndOutputDifferentInputD1B.setProcessorPeriod(procPeriodB);
+		sameRangeAndOutputDifferentInputD1B.setOutputTimeSeriesUniqueId("D1");
+		sameRangeAndOutputDifferentInputD1B.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UUU", "UU1", "UU2")));
+		sameRangeAndOutputDifferentInputD2A.setProcessorPeriod(procPeriodA);
+		sameRangeAndOutputDifferentInputD2A.setOutputTimeSeriesUniqueId("D2");
+		sameRangeAndOutputDifferentInputD2A.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UUU", "UU1", "UU2")));
+		sameRangeAndOutputDifferentInputD2B.setProcessorPeriod(procPeriodB);
+		sameRangeAndOutputDifferentInputD2B.setOutputTimeSeriesUniqueId("D2");
+		sameRangeAndOutputDifferentInputD2B.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("UUU", "UU1", "UU2")));
+		sameRangeDifferentOutputD1A.setProcessorPeriod(procPeriodA);
+		sameRangeDifferentOutputD1A.setOutputTimeSeriesUniqueId("diff");
+		sameRangeDifferentOutputD1B.setProcessorPeriod(procPeriodA);
+		sameRangeDifferentOutputD1B.setOutputTimeSeriesUniqueId("diff");
+		sameRangeDifferentOutputD2A.setProcessorPeriod(procPeriodA);
+		sameRangeDifferentOutputD2A.setOutputTimeSeriesUniqueId("diff");
+		sameRangeDifferentOutputD2B.setProcessorPeriod(procPeriodA);
+		sameRangeDifferentOutputD2B.setOutputTimeSeriesUniqueId("diff");
+		differentRangeSameOutputD1AB.setProcessorPeriod(procPeriodC);
+		differentRangeSameOutputD1AB.setOutputTimeSeriesUniqueId("D1");
+		differentRangeSameOutputD2AB.setProcessorPeriod(procPeriodC);
+		differentRangeSameOutputD2AB.setOutputTimeSeriesUniqueId("D1");
+		assertTrue(service.listContainsEquivalentProcessor(procList1, procD1A));
+		assertTrue(service.listContainsEquivalentProcessor(procList1, procD1B));
+		assertTrue(service.listContainsEquivalentProcessor(procList1, procD2A));
+		assertFalse(service.listContainsEquivalentProcessor(procList1, procD2B));
+		assertTrue(service.listContainsEquivalentProcessor(procList1, sameRangeAndOutputDifferentInputD1A));
+		assertTrue(service.listContainsEquivalentProcessor(procList1, sameRangeAndOutputDifferentInputD1B));
+		assertTrue(service.listContainsEquivalentProcessor(procList1, sameRangeAndOutputDifferentInputD2A));
+		assertFalse(service.listContainsEquivalentProcessor(procList1, sameRangeAndOutputDifferentInputD2B));
+		assertFalse(service.listContainsEquivalentProcessor(procList1, sameRangeDifferentOutputD1A));
+		assertFalse(service.listContainsEquivalentProcessor(procList1, sameRangeDifferentOutputD1B));
+		assertFalse(service.listContainsEquivalentProcessor(procList1, sameRangeDifferentOutputD2A));
+		assertFalse(service.listContainsEquivalentProcessor(procList1, sameRangeDifferentOutputD2B));
+		assertFalse(service.listContainsEquivalentProcessor(procList1, differentRangeSameOutputD1AB));
+		assertFalse(service.listContainsEquivalentProcessor(procList1, differentRangeSameOutputD2AB));
+	}
+
+	@Test
+	public void areTimeRangesEquivalentTest() {
+		assertTrue(service.areTimeRangesEquivalent(procPeriodA, procPeriodA));
+		assertTrue(service.areTimeRangesEquivalent(procPeriodB, procPeriodB));
+		assertTrue(service.areTimeRangesEquivalent(procPeriodC, procPeriodC));
+		assertFalse(service.areTimeRangesEquivalent(procPeriodA, procPeriodB));
+		assertFalse(service.areTimeRangesEquivalent(procPeriodA, procPeriodC));
+		assertFalse(service.areTimeRangesEquivalent(procPeriodB, procPeriodC));
+	}
+
+	@Test
+	public void getTimeSeriesDesciprionMapSingleTest() {
+		given(descService.getTimeSeriesDescriptionList(Arrays.asList("R"))).willReturn(Arrays.asList(descR));
+		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDesciprionMap(Arrays.asList("R"));
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(result.size(), 1);
+		assertEquals(result.get("R"), descR);
+	}
+
+	@Test
+	public void getTimeSeriesDesciprionMapSuccessTest() {
+		given(descService.getTimeSeriesDescriptionList(fullIdList)).willReturn(fullDescList);
+		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDesciprionMap(fullIdList);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(result.size(), 20);
+		assertEquals(result.get("R"), descR);
+		assertEquals(result.get("U1"), descU1);
+		assertEquals(result.get("U2"), descU2);
+		assertEquals(result.get("U3"), descU3);
+		assertEquals(result.get("D1"), descD1);
+		assertEquals(result.get("D2"), descD2);
+		assertEquals(result.get("UU1"), descUU1);
+		assertEquals(result.get("UU2"), descUU2);
+		assertEquals(result.get("UD"), descUD);
+		assertEquals(result.get("DU"), descDU);
+		assertEquals(result.get("DD"), descDD);
+		assertEquals(result.get("UUU"), descUUU);
+		assertEquals(result.get("UUD1"), descUUD1);
+		assertEquals(result.get("UUD2"), descUUD2);
+		assertEquals(result.get("UDU"), descUDU);
+		assertEquals(result.get("UDD"), descUDD);
+		assertEquals(result.get("DUU"), descDUU);
+		assertEquals(result.get("DUD"), descDUD);
+		assertEquals(result.get("DDU"), descDDU);
+		assertEquals(result.get("DDD"), descDDD);
+	}
+
+	@Test
+	public void getTimeSeriesDesciprionMapFailTest() {
+		given(descService.getTimeSeriesDescriptionList(fullIdList)).willReturn(fullDescList.subList(1, fullDescList.size()-2));
+		try {
+			service.getTimeSeriesDesciprionMap(fullIdList);
+		} catch(AquariusRetrievalException ARE) {
+			assertTrue(ARE.getMessage().contains("Did not recieve all requested Time Series Descriptions!"));
+			return;
+		} catch(Exception e) {
+			fail("Expected AquariusRetrievalException but " + e.getClass().toString() + " was thrown.");
+		}
+		fail("Expected AquariusRetrievalException but no exception was thrown.");
+	}
+
+	@Test
+	public void getTimeSeriesDescriptionMapBatchingTest() {
+		//Build Mock ID List
+		List<String> mockIdList = new ArrayList<>();
+		for(Integer i = 0; i < (DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2 + 1); i++) {
+			mockIdList.add(i.toString());
+		}
+
+		//Build Expected Requests
+		List<String> request1 = mockIdList.subList(0, DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE);
+		List<String> request2 = mockIdList.subList(DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE, DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2);
+		List<String> request3 = mockIdList.subList(DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2, mockIdList.size());
+
+		//Build Expected Responses
+		List<TimeSeriesDescription> response1 = new ArrayList<>();
+		for(String id : request1) {
+			TimeSeriesDescription desc = new TimeSeriesDescription();
+			desc.setUniqueId(id);
+			response1.add(desc);
+		}
+		List<TimeSeriesDescription> response2 = new ArrayList<>();
+		for(String id : request2) {
+			TimeSeriesDescription desc = new TimeSeriesDescription();
+			desc.setUniqueId(id);
+			response1.add(desc);
+		}
+		List<TimeSeriesDescription> response3 = new ArrayList<>();
+		for(String id : request3) {
+			TimeSeriesDescription desc = new TimeSeriesDescription();
+			desc.setUniqueId(id);
+			response1.add(desc);
+		}
+		List<TimeSeriesDescription> fullResults = new ArrayList<>();
+		fullResults.addAll(response1);
+		fullResults.addAll(response2);
+		fullResults.addAll(response3);
+
+		//Mock Expected Requests/Responses
+		given(descService.getTimeSeriesDescriptionList(request1)).willReturn(response1);
+		given(descService.getTimeSeriesDescriptionList(request2)).willReturn(response2);
+		given(descService.getTimeSeriesDescriptionList(request3)).willReturn(response3);
+
+		//Execute Test
+		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDesciprionMap(mockIdList);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(result.size(), (DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2 + 1));
+		assertThat(result.keySet(), containsInAnyOrder(mockIdList.toArray()));
+		assertThat(result.values(), containsInAnyOrder(fullResults.toArray()));
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	public void getTimeSeriesDescriptionMapEmptyTest() {
+		given(descService.getTimeSeriesDescriptionList(any(ArrayList.class))).willReturn(Arrays.asList(descR));
+		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDesciprionMap(new ArrayList<>());
+		assertTrue(result != null);
+		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	public void buildReverseDerivationMapTest() {
+		Map<String, List<Processor>> procMap = new HashMap<>();
+		procMap.put("R", Arrays.asList(procRC));
+		procMap.put("U1", Arrays.asList(procU1C));
+		procMap.put("U2", Arrays.asList(procU2A, procU2B));
+		procMap.put("U3", Arrays.asList(procU3B));
+		procMap.put("D1", Arrays.asList(procD1A, procD1B));
+		procMap.put("D2", Arrays.asList(procD2A, procD2B));
+		procMap.put("DDD", Arrays.asList(procDDDC));
+		procMap.put("UUU", new ArrayList<>());
+		Map<String, Set<String>> result = service.buildReverseDerivationMap(procMap);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(result.size(), 8);
+		assertThat(result.keySet(), containsInAnyOrder("R", "U1", "U2", "U3", "UU1", "UU2", "DU", "DD"));
+		assertThat(result.get("R"), containsInAnyOrder("D1", "D2"));
+		assertThat(result.get("U1"), containsInAnyOrder("R"));
+		assertThat(result.get("U2"), containsInAnyOrder("R"));
+		assertThat(result.get("U3"), containsInAnyOrder("R"));
+		assertThat(result.get("UU1"), containsInAnyOrder("U1", "U2"));
+		assertThat(result.get("UU2"), containsInAnyOrder("U3"));
+		assertThat(result.get("DU"), containsInAnyOrder("D1"));
+		assertThat(result.get("DD"), containsInAnyOrder("DDD"));
+	}
+
+	@Test
+	public void buildNodesEmptyTest() {
+		List<DerivationNode> result = service.buildNodes(new HashMap<>(), new HashMap<>(), new HashMap<>());
+		assertTrue(result != null);
+		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	public void buildNodesFullTest() {
+		Map<String, List<Processor>> procMap = new HashMap<>();
+		procMap.put("R", Arrays.asList(procRC));
+		procMap.put("U1", Arrays.asList(procU1C));
+		procMap.put("U2", Arrays.asList(procU2A, procU2B));
+		procMap.put("U3", Arrays.asList(procU3B));
+		procMap.put("D1", Arrays.asList(procD1A, procD1B));
+		procMap.put("D2", Arrays.asList(procD2A, procD2B));
+		procMap.put("DDD", Arrays.asList(procDDDC));
+		procMap.put("UUU", new ArrayList<>());
+
+		Map<String, TimeSeriesDescription> tsDescMap = new HashMap<>();
+		tsDescMap.put("R", descR);
+		tsDescMap.put("U1", descU1);
+		tsDescMap.put("U2", descU2);
+		tsDescMap.put("U3", descU3);
+		tsDescMap.put("D1", descD1);
+		tsDescMap.put("D2", descD2);
+		tsDescMap.put("DDD", descDDD);
+		tsDescMap.put("UUU", descUUU);
+
+		Map<String, Set<String>>  derivedTsMap = new HashMap<>();
+		derivedTsMap.put("R", new HashSet<>(Arrays.asList("D1", "D2")));
+		derivedTsMap.put("U1", new HashSet<>(Arrays.asList("R")));
+		derivedTsMap.put("U2", new HashSet<>(Arrays.asList("R")));
+		derivedTsMap.put("U3", new HashSet<>(Arrays.asList("R")));
+		derivedTsMap.put("D1", new HashSet<>(Arrays.asList("DD1")));
+		derivedTsMap.put("D2", new HashSet<>(Arrays.asList("DD1")));
+		derivedTsMap.put("DDD", new HashSet<>());
+		derivedTsMap.put("UUU", new HashSet<>(Arrays.asList("UU1", "UU2")));
+
+		List<DerivationNode> result = service.buildNodes(procMap, tsDescMap, derivedTsMap);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(result.size(), 11);
+
+		for(DerivationNode node : result) {
+			String id = node.getUniqueId();
+			List<Processor> procList = procMap.get(id);
+			TimeSeriesDescription desc = tsDescMap.get(id);
+			Set<String> derivedTs = derivedTsMap.get(id);
+			Processor nodeProc = null;
+
+			//Identify the correct source processor, if applicable
+			if(procList != null && !procList.isEmpty()) {
+				for(Processor proc : procList) {
+					if(proc.getProcessorPeriod().getEndTime().equals(node.getPeriodEndTime()) && 
+						proc.getProcessorPeriod().getStartTime().equals(node.getPeriodStartTime())) {
+							nodeProc = proc;
+							break;
+						}
+				}
+				assertTrue(nodeProc != null);
+				assertEquals(node.getInputTimeSeriesUniqueIds(), nodeProc.getInputTimeSeriesUniqueIds());
+			}
+			
+			assertEquals(node.getUniqueId(), desc.getUniqueId());
+
+			//Validate derived ts, if applicable
+			if(derivedTs != null && !derivedTs.isEmpty()) {
+				assertThat(node.getDerivedTimeSeriesUniqueIds(), containsInAnyOrder(derivedTs.toArray()));
+			}
+			
+		}
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	public void buildDerivationChainTest() {
+		given(tsUidsService.getTimeSeriesUniqueIdList(any(String.class))).willReturn(fullIdList);
+
+		//Build expected batch description request/responses
+		List<List<TimeSeriesDescription>> responses = new ArrayList<>();
+		responses.add(new ArrayList<>());
+		Integer subListIndex = 0;
+		for(Integer i = 0; i < fullDescList.size(); i++) {
+			responses.get(subListIndex).add(fullDescList.get(i));
+			if((i+1) % DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE == 0) {
+				subListIndex++;
+				responses.add(new ArrayList<>());
+			}
+		}
+		when(descService.getTimeSeriesDescriptionList(any(List.class))).thenAnswer(new Answer<List<TimeSeriesDescription>>() {
+			private int responseIndex = 0;
+
+			public List<TimeSeriesDescription> answer(InvocationOnMock invocation) {
+				List<TimeSeriesDescription> result = null;
+				result = responses.get(responseIndex);
+				responseIndex++;
+				return result;
+			}
+		});
+
+		//Execute Test
+		List<DerivationNode> result = service.buildDerivationChain("R", "location");
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(result.size(), 25);
 	}
 
 	public CompletableFuture<List<Processor>> mockAsyncProcs(List<Processor> list) {

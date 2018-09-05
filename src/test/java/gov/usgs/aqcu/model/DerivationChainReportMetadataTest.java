@@ -23,6 +23,5 @@ public class DerivationChainReportMetadataTest {
 	   assertEquals(metadata.getRequestParameters(), params);
 	   assertEquals(metadata.getStartDate(), null);
 	   assertEquals(metadata.getEndDate(), null);
-	   //assertEquals(metadata.getPrimaryTimeSeriesIdentifier(), params.getPrimaryTimeseriesIdentifier());
 	}
 }
