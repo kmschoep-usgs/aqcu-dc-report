@@ -66,9 +66,8 @@ public class DerivationChainBuilderService {
 		Stack<String> toExplore = new Stack<>();
 		toExplore.push(primaryTimeSeriesUniqueId);
 
-		// Find all Time Series upchain and downchain of the root
+		// If there are TS to explore continue exploring
 		while(!toExplore.isEmpty()) {
-			// Start Async Upchain/Downchain Processor Requests
 			List<CompletableFuture<List<Processor>>> upProcFutureList = new ArrayList<>();
 			List<CompletableFuture<List<Processor>>> downProcFutureList = new ArrayList<>();
 
@@ -76,13 +75,12 @@ public class DerivationChainBuilderService {
 			while(!toExplore.isEmpty()) {
 				String exploreId = toExplore.pop();
 
+				// Create upchain/downchain requests if we haven't already explored this TS
 				if(!exploredSet.contains(exploreId)) {
 					exploredSet.add(exploreId);
 
-					// Initialize this entry in the map, if necessary
-					if(procMap.get(exploreId) == null) {
-						procMap.put(exploreId, new ArrayList<>());
-					}
+					// Initialize this TS in our procesor map
+					procMap.put(exploreId, new ArrayList<>());
 
 					// Request upchain processors
 					upProcFutureList.add(asyncDerivationChainRetrievalService.getAsyncUpchainProcessorListByTimeSeriesUniqueId(exploreId));
@@ -94,20 +92,14 @@ public class DerivationChainBuilderService {
 				}
 			}
 
-			LOG.debug("Launching " + (upProcFutureList.size() + downProcFutureList.size()) + " Async Requests.");
-
-			// Handle upchain responses
+			// Handle upchain/downchain responses and re-populate our toExplore stack with their input/output TS
 			if(!upProcFutureList.isEmpty()) {
 				// Wait for Upchain futures to populate
 				List<List<Processor>> upchainResults = waitForFutures(upProcFutureList);
-
-				// Process Upchain Results
 				for(List<Processor> result : upchainResults) {
 					for(Processor proc : result) {
 						// Can have multiple processors that output the same TS as long as they have unique time ranges
-						if(procMap.get(proc.getOutputTimeSeriesUniqueId()).isEmpty() || 
-							!listContainsEquivalentProcessor(procMap.get(proc.getOutputTimeSeriesUniqueId()), proc)
-						) {	
+						if(!listContainsEquivalentProcessor(procMap.get(proc.getOutputTimeSeriesUniqueId()), proc)) {	
 							procMap.get(proc.getOutputTimeSeriesUniqueId()).add(proc);
 						}
 						
@@ -118,13 +110,10 @@ public class DerivationChainBuilderService {
 					}
 				}
 			}
-
-			// Handle downchain responses
+			
 			if(!downProcFutureList.isEmpty()) {
 				// Wait for Downchain futures to populate
 				List<List<Processor>> downchainResults = waitForFutures(downProcFutureList);
-
-				// Add all output TS UIds from all processors to our explore set
 				for(List<Processor> result : downchainResults) {
 					toExplore.addAll(result.stream().map(p -> p.getOutputTimeSeriesUniqueId()).collect(Collectors.toSet()));
 				}
