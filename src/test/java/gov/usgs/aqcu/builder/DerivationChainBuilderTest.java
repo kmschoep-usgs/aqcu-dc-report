@@ -2,6 +2,8 @@ package gov.usgs.aqcu.builder;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.BDDMockito.given;
@@ -260,7 +262,7 @@ public class DerivationChainBuilderTest {
 		futureList.add(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
 		futureList.add(mockAsyncProcs(Arrays.asList(procU2A, procU2B)));
 		List<List<Processor>> result = service.waitForFutures(futureList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 3);
 		assertThat(result.get(0), containsInAnyOrder(procRC));
@@ -274,7 +276,7 @@ public class DerivationChainBuilderTest {
 		futureList.add(mockEmptyFuture);
 		futureList.add(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
 		List<List<Processor>> result = service.waitForFutures(futureList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 2);
 		assertTrue(result.get(0).isEmpty());
@@ -285,7 +287,7 @@ public class DerivationChainBuilderTest {
 	public void waitForFuturesEmptyTest() {
 		List<CompletableFuture<List<Processor>>> futureList = new ArrayList<>();
 		List<List<Processor>> result = service.waitForFutures(futureList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(result.isEmpty());
 	}
 
@@ -294,39 +296,39 @@ public class DerivationChainBuilderTest {
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockEmptyFuture);
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
 		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", fullIdList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(9, result.keySet().size());
 		assertEquals(9, result.values().size());
 		assertThat(result.keySet(), containsInAnyOrder("R", "D1", "D2", "DU", "DD", "DUU", "DUD", "DDU", "DDD"));
-		assertTrue(result.get("R") != null);
+		assertNotNull(result.get("R"));
 		assertTrue(result.get("R").isEmpty());
-		assertTrue(result.get("U1") == null);
-		assertTrue(result.get("U2") == null);
-		assertTrue(result.get("U3") == null);
-		assertTrue(result.get("D1") != null);
+		assertNull(result.get("U1"));
+		assertNull(result.get("U2"));
+		assertNull(result.get("U3"));
+		assertNotNull(result.get("D1"));
 		assertThat(result.get("D1"), containsInAnyOrder(procD1A, procD1B));
-		assertTrue(result.get("D2") != null);
+		assertNotNull(result.get("D2"));
 		assertThat(result.get("D2"), containsInAnyOrder(procD2A, procD2B));
-		assertTrue(result.get("UU1") == null);
-		assertTrue(result.get("UU2") == null);
-		assertTrue(result.get("UD") == null);
-		assertTrue(result.get("DU") != null);
+		assertNull(result.get("UU1"));
+		assertNull(result.get("UU2"));
+		assertNull(result.get("UD"));
+		assertNotNull(result.get("DU"));
 		assertThat(result.get("DU"), containsInAnyOrder(procDUA));
-		assertTrue(result.get("DD") != null);
+		assertNotNull(result.get("DD"));
 		assertThat(result.get("DD"), containsInAnyOrder(procDDA, procDDB));
-		assertTrue(result.get("UUU") == null);
-		assertTrue(result.get("UUD1") == null);
-		assertTrue(result.get("UUD2") == null);
-		assertTrue(result.get("UDU") == null);
-		assertTrue(result.get("UDD") == null);
-		assertTrue(result.get("DUU") != null);
+		assertNull(result.get("UUU"));
+		assertNull(result.get("UUD1"));
+		assertNull(result.get("UUD2"));
+		assertNull(result.get("UDU"));
+		assertNull(result.get("UDD"));
+		assertNotNull(result.get("DUU"));
 		assertTrue(result.get("DUU").isEmpty());
-		assertTrue(result.get("DUD") != null);
+		assertNotNull(result.get("DUD"));
 		assertThat(result.get("DUD"), containsInAnyOrder(procDUDA));
-		assertTrue(result.get("DDU") != null);
+		assertNotNull(result.get("DDU"));
 		assertTrue(result.get("DDU").isEmpty());
-		assertTrue(result.get("DDD") != null);
+		assertNotNull(result.get("DDD"));
 		assertThat(result.get("DDD"), containsInAnyOrder(procDDDC));
 	}
 
@@ -335,43 +337,43 @@ public class DerivationChainBuilderTest {
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockAsyncProcs(Arrays.asList(procRC)));
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockEmptyFuture);
 		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", fullIdList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(12, result.keySet().size());
 		assertEquals(12, result.values().size());
 		assertThat(result.keySet(), containsInAnyOrder("R", "U1", "U2", "U3", "UU1", "UU2", "UD", "UUU", "UUD1", "UUD2", "UDU", "UDD"));
-		assertTrue(result.get("R") != null);
+		assertNotNull(result.get("R"));
 		assertThat(result.get("R"), containsInAnyOrder(procRC));
-		assertTrue(result.get("U1") != null);
+		assertNotNull(result.get("U1"));
 		assertThat(result.get("U1"), containsInAnyOrder(procU1C));
-		assertTrue(result.get("U2") != null);
+		assertNotNull(result.get("U2"));
 		assertThat(result.get("U2"), containsInAnyOrder(procU2A, procU2B));
-		assertTrue(result.get("U3") != null);
+		assertNotNull(result.get("U3"));
 		assertThat(result.get("U3"), containsInAnyOrder(procU3B));
-		assertTrue(result.get("D1") == null);
-		assertTrue(result.get("D2") == null);
-		assertTrue(result.get("UU1") != null);
+		assertNull(result.get("D1"));
+		assertNull(result.get("D2"));
+		assertNotNull(result.get("UU1"));
 		assertThat(result.get("UU1"), containsInAnyOrder(procUU1A));
-		assertTrue(result.get("UU2") != null);
+		assertNotNull(result.get("UU2"));
 		assertThat(result.get("UU2"), containsInAnyOrder(procUU2B));
-		assertTrue(result.get("UD") != null);
+		assertNotNull(result.get("UD"));
 		assertThat(result.get("UD"), containsInAnyOrder(procUDA, procUDB));
-		assertTrue(result.get("DU") == null);
-		assertTrue(result.get("DD") == null);
-		assertTrue(result.get("UUU") != null);
+		assertNull(result.get("DU"));
+		assertNull(result.get("DD"));
+		assertNotNull(result.get("UUU"));
 		assertTrue(result.get("UUU").isEmpty());
-		assertTrue(result.get("UUD1") != null);
+		assertNotNull(result.get("UUD1"));
 		assertThat(result.get("UUD1"), containsInAnyOrder(procUUD1A));
-		assertTrue(result.get("UUD2") != null);
+		assertNotNull(result.get("UUD2"));
 		assertThat(result.get("UUD2"), containsInAnyOrder(procUUD2B));
-		assertTrue(result.get("UDU") != null);
+		assertNotNull(result.get("UDU"));
 		assertTrue(result.get("UDU").isEmpty());
-		assertTrue(result.get("UDD") != null);
+		assertNotNull(result.get("UDD"));
 		assertThat(result.get("UDD"), containsInAnyOrder(procUDDA));
-		assertTrue(result.get("DUU") == null);
-		assertTrue(result.get("DUD") == null);
-		assertTrue(result.get("DDU") == null);
-		assertTrue(result.get("DDD") == null);
+		assertNull(result.get("DUU"));
+		assertNull(result.get("DUD"));
+		assertNull(result.get("DDU"));
+		assertNull(result.get("DDD"));
 		
 	}
 
@@ -380,127 +382,127 @@ public class DerivationChainBuilderTest {
 		given(asyncService.getAsyncUpchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockEmptyFuture);
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("R")).willReturn(mockEmptyFuture);
 		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", fullIdList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(1, result.keySet().size());
 		assertEquals(1, result.values().size());
 		assertThat(result.keySet(), containsInAnyOrder("R"));
-		assertTrue(result.get("R") != null);
+		assertNotNull(result.get("R"));
 		assertTrue(result.get("R").isEmpty());
-		assertTrue(result.get("U1") == null);
-		assertTrue(result.get("U2") == null);
-		assertTrue(result.get("U3") == null);
-		assertTrue(result.get("D1") == null);
-		assertTrue(result.get("D2") == null);
-		assertTrue(result.get("UU1") == null);
-		assertTrue(result.get("UU2") == null);
-		assertTrue(result.get("UD") == null);
-		assertTrue(result.get("DU") == null);
-		assertTrue(result.get("DD") == null);
-		assertTrue(result.get("UUU") == null);
-		assertTrue(result.get("UUD1") == null);
-		assertTrue(result.get("UUD2") == null);
-		assertTrue(result.get("UDU") == null);
-		assertTrue(result.get("UDD") == null);
-		assertTrue(result.get("DUU") == null);
-		assertTrue(result.get("DUD") == null);
-		assertTrue(result.get("DDU") == null);
-		assertTrue(result.get("DDD") == null);
+		assertNull(result.get("U1"));
+		assertNull(result.get("U2"));
+		assertNull(result.get("U3"));
+		assertNull(result.get("D1"));
+		assertNull(result.get("D2"));
+		assertNull(result.get("UU1"));
+		assertNull(result.get("UU2"));
+		assertNull(result.get("UD"));
+		assertNull(result.get("DU"));
+		assertNull(result.get("DD"));
+		assertNull(result.get("UUU"));
+		assertNull(result.get("UUD1"));
+		assertNull(result.get("UUD2"));
+		assertNull(result.get("UDU"));
+		assertNull(result.get("UDD"));
+		assertNull(result.get("DUU"));
+		assertNull(result.get("DUD"));
+		assertNull(result.get("DDU"));
+		assertNull(result.get("DDD"));
 	}
 
 	@Test
 	public void getRecursiveProcessorMapInclusiveTest() {
 		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", fullIdList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(20, result.keySet().size());
 		assertEquals(20, result.values().size());
 		assertThat(result.keySet(), containsInAnyOrder(fullIdList.toArray()));
-		assertTrue(result.get("R") != null);
+		assertNotNull(result.get("R"));
 		assertThat(result.get("R"), containsInAnyOrder(procRC));
-		assertTrue(result.get("U1") != null);
+		assertNotNull(result.get("U1"));
 		assertThat(result.get("U1"), containsInAnyOrder(procU1C));
-		assertTrue(result.get("U2") != null);
+		assertNotNull(result.get("U2"));
 		assertThat(result.get("U2"), containsInAnyOrder(procU2A, procU2B));
-		assertTrue(result.get("U3") != null);
+		assertNotNull(result.get("U3"));
 		assertThat(result.get("U3"), containsInAnyOrder(procU3B));
-		assertTrue(result.get("D1") != null);
+		assertNotNull(result.get("D1"));
 		assertThat(result.get("D1"), containsInAnyOrder(procD1A, procD1B));
-		assertTrue(result.get("D2") != null);
+		assertNotNull(result.get("D2"));
 		assertThat(result.get("D2"), containsInAnyOrder(procD2A, procD2B));
-		assertTrue(result.get("UU1") != null);
+		assertNotNull(result.get("UU1"));
 		assertThat(result.get("UU1"), containsInAnyOrder(procUU1A));
-		assertTrue(result.get("UU2") != null);
+		assertNotNull(result.get("UU2"));
 		assertThat(result.get("UU2"), containsInAnyOrder(procUU2B));
-		assertTrue(result.get("UD") != null);
+		assertNotNull(result.get("UD"));
 		assertThat(result.get("UD"), containsInAnyOrder(procUDA, procUDB));
-		assertTrue(result.get("DU") != null);
+		assertNotNull(result.get("DU"));
 		assertThat(result.get("DU"), containsInAnyOrder(procDUA));
-		assertTrue(result.get("DD") != null);
+		assertNotNull(result.get("DD"));
 		assertThat(result.get("DD"), containsInAnyOrder(procDDA, procDDB));
-		assertTrue(result.get("UUU") != null);
+		assertNotNull(result.get("UUU"));
 		assertTrue(result.get("UUU").isEmpty());
-		assertTrue(result.get("UUD1") != null);
+		assertNotNull(result.get("UUD1"));
 		assertThat(result.get("UUD1"), containsInAnyOrder(procUUD1A));
-		assertTrue(result.get("UUD2") != null);
+		assertNotNull(result.get("UUD2"));
 		assertThat(result.get("UUD2"), containsInAnyOrder(procUUD2B));
-		assertTrue(result.get("UDU") != null);
+		assertNotNull(result.get("UDU"));
 		assertTrue(result.get("UDU").isEmpty());
-		assertTrue(result.get("UDD") != null);
+		assertNotNull(result.get("UDD"));
 		assertThat(result.get("UDD"), containsInAnyOrder(procUDDA));
-		assertTrue(result.get("DUU") != null);
+		assertNotNull(result.get("DUU"));
 		assertTrue(result.get("DUU").isEmpty());
-		assertTrue(result.get("DUD") != null);
+		assertNotNull(result.get("DUD"));
 		assertThat(result.get("DUD"), containsInAnyOrder(procDUDA));
-		assertTrue(result.get("DDU") != null);
+		assertNotNull(result.get("DDU"));
 		assertTrue(result.get("DDU").isEmpty());
-		assertTrue(result.get("DDD") != null);
+		assertNotNull(result.get("DDD"));
 		assertThat(result.get("DDD"), containsInAnyOrder(procDDDC));
 	}
 
 	@Test
 	public void getRecursiveProcessorMapLimitedTest() {
 		Map<String, List<Processor>> result = service.getRecursiveProcessorMap("R", Arrays.asList("R", "U1", "U2", "D1", "D2", "UU1", "DD", "UUU", "DDD"));
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(15, result.keySet().size());
 		assertEquals(15, result.values().size());
 		assertThat(result.keySet(), containsInAnyOrder("R", "U1", "U2", "U3", "D1", "D2", "UU1", "UU2", "UD", "DU", "DD", "UUU", "UUD1", "DDU", "DDD"));
-		assertTrue(result.get("R") != null);
+		assertNotNull(result.get("R"));
 		assertThat(result.get("R"), containsInAnyOrder(procRC));
-		assertTrue(result.get("U1") != null);
+		assertNotNull(result.get("U1"));
 		assertThat(result.get("U1"), containsInAnyOrder(procU1C));
-		assertTrue(result.get("U2") != null);
+		assertNotNull(result.get("U2"));
 		assertThat(result.get("U2"), containsInAnyOrder(procU2A, procU2B));
-		assertTrue(result.get("U3") != null);
+		assertNotNull(result.get("U3"));
 		assertThat(result.get("U3"), containsInAnyOrder(procU3B));
-		assertTrue(result.get("D1") != null);
+		assertNotNull(result.get("D1"));
 		assertThat(result.get("D1"), containsInAnyOrder(procD1A, procD1B));
-		assertTrue(result.get("D2") != null);
+		assertNotNull(result.get("D2"));
 		assertThat(result.get("D2"), containsInAnyOrder(procD2A, procD2B));
-		assertTrue(result.get("UU1") != null);
+		assertNotNull(result.get("UU1"));
 		assertThat(result.get("UU1"), containsInAnyOrder(procUU1A));
-		assertTrue(result.get("UU2") != null);
+		assertNotNull(result.get("UU2"));
 		assertThat(result.get("UU2"), containsInAnyOrder(procUU2B));
-		assertTrue(result.get("UD") != null);
+		assertNotNull(result.get("UD"));
 		assertThat(result.get("UD"), containsInAnyOrder(procUDA, procUDB));
-		assertTrue(result.get("DU") != null);
+		assertNotNull(result.get("DU"));
 		assertThat(result.get("DU"), containsInAnyOrder(procDUA));
-		assertTrue(result.get("DD") != null);
+		assertNotNull(result.get("DD"));
 		assertThat(result.get("DD"), containsInAnyOrder(procDDA, procDDB));
-		assertTrue(result.get("UUU") != null);
+		assertNotNull(result.get("UUU"));
 		assertTrue(result.get("UUU").isEmpty());
-		assertTrue(result.get("UUD1") != null);
+		assertNotNull(result.get("UUD1"));
 		assertThat(result.get("UUD1"), containsInAnyOrder(procUUD1A));
-		assertTrue(result.get("UUD2") == null);
-		assertTrue(result.get("UDU") == null);
-		assertTrue(result.get("UDD") == null);
-		assertTrue(result.get("DUU") == null);
-		assertTrue(result.get("DUD") == null);
-		assertTrue(result.get("DDU") != null);
-		assertTrue(result.get("DDU") != null);
+		assertNull(result.get("UUD2"));
+		assertNull(result.get("UDU"));
+		assertNull(result.get("UDD"));
+		assertNull(result.get("DUU"));
+		assertNull(result.get("DUD"));
+		assertNotNull(result.get("DDU"));
+		assertNotNull(result.get("DDU"));
 		assertTrue(result.get("DDU").isEmpty());
-		assertTrue(result.get("DDD") != null);
+		assertNotNull(result.get("DDD"));
 		assertThat(result.get("DDD"), containsInAnyOrder(procDDDC));
 	}
 
@@ -571,7 +573,7 @@ public class DerivationChainBuilderTest {
 	public void getTimeSeriesDescriptionMapSingleTest() {
 		given(descService.getTimeSeriesDescriptionList(Arrays.asList("R"))).willReturn(Arrays.asList(descR));
 		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(Arrays.asList("R"));
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 1);
 		assertEquals(result.get("R"), descR);
@@ -581,7 +583,7 @@ public class DerivationChainBuilderTest {
 	public void getTimeSeriesDescriptionMapSuccessTest() {
 		given(descService.getTimeSeriesDescriptionList(fullIdList)).willReturn(fullDescList);
 		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(fullIdList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 20);
 		assertEquals(result.get("R"), descR);
@@ -664,7 +666,7 @@ public class DerivationChainBuilderTest {
 
 		//Execute Test
 		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(mockIdList);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), (DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2 + 1));
 		assertThat(result.keySet(), containsInAnyOrder(mockIdList.toArray()));
@@ -676,7 +678,7 @@ public class DerivationChainBuilderTest {
 	public void getTimeSeriesDescriptionMapEmptyTest() {
 		given(descService.getTimeSeriesDescriptionList(any(ArrayList.class))).willReturn(Arrays.asList(descR));
 		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(new ArrayList<>());
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(result.isEmpty());
 	}
 
@@ -692,7 +694,7 @@ public class DerivationChainBuilderTest {
 		procMap.put("DDD", Arrays.asList(procDDDC));
 		procMap.put("UUU", new ArrayList<>());
 		Map<String, Set<String>> result = service.buildReverseDerivationMap(procMap);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 8);
 		assertThat(result.keySet(), containsInAnyOrder("R", "U1", "U2", "U3", "UU1", "UU2", "DU", "DD"));
@@ -709,7 +711,7 @@ public class DerivationChainBuilderTest {
 	@Test
 	public void buildNodesEmptyTest() {
 		List<DerivationNode> result = service.buildNodes(new HashMap<>(), new HashMap<>(), new HashMap<>());
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(result.isEmpty());
 	}
 
@@ -746,7 +748,7 @@ public class DerivationChainBuilderTest {
 		derivedTsMap.put("UUU", new HashSet<>(Arrays.asList("UU1", "UU2")));
 
 		List<DerivationNode> result = service.buildNodes(procMap, tsDescMap, derivedTsMap);
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 11);
 
@@ -766,7 +768,7 @@ public class DerivationChainBuilderTest {
 							break;
 						}
 				}
-				assertTrue(nodeProc != null);
+				assertNotNull(nodeProc);
 				assertEquals(node.getInputTimeSeriesUniqueIds(), nodeProc.getInputTimeSeriesUniqueIds());
 			}
 			
@@ -809,7 +811,7 @@ public class DerivationChainBuilderTest {
 
 		//Execute Test
 		List<DerivationNode> result = service.buildDerivationChain("R", "location");
-		assertTrue(result != null);
+		assertNotNull(result);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 25);
 	}

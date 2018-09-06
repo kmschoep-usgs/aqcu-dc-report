@@ -1,11 +1,11 @@
 package gov.usgs.aqcu.builder;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,8 +88,8 @@ public class DerivationChainReportBuilderTest {
 		given(chainBuilderService.buildDerivationChain(any(String.class), any(String.class))).willReturn(nodes);
 		
 		DerivationChainReport report = service.buildReport(requestParams, REQUESTING_USER);
-		assertTrue(report != null);
-		assertTrue(report.getReportMetadata() != null);
+		assertNotNull(report);
+		assertNotNull(report.getReportMetadata());
 		assertEquals(report.getReportMetadata().getRequestingUser(), REQUESTING_USER);
 		assertEquals(report.getReportMetadata().getStartDate(), metadata.getStartDate());
 		assertEquals(report.getReportMetadata().getEndDate(), metadata.getEndDate());
@@ -106,7 +106,7 @@ public class DerivationChainReportBuilderTest {
 			.willReturn(primaryLoc);
 
 		DerivationChainReportMetadata newMetadata = service.getReportMetadata(requestParams, REQUESTING_USER, primaryLoc.getIdentifier(), primaryDesc.getIdentifier(), primaryDesc.getUtcOffset());
-		assertTrue(newMetadata != null);
+		assertNotNull(newMetadata);
 		assertEquals(newMetadata.getRequestingUser(), REQUESTING_USER);
 		assertEquals(newMetadata.getStartDate(), metadata.getStartDate());
 		assertEquals(newMetadata.getEndDate(), metadata.getEndDate());
