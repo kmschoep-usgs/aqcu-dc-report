@@ -93,27 +93,18 @@ public class DerivationChainBuilderService {
 			}
 
 			// Handle upchain/downchain responses and re-populate our toExplore stack with their input/output TS
-			if(!upProcFutureList.isEmpty()) {
-				// Wait for Upchain futures to populate
-				Set<Processor> upchainResults = waitForFutures(upProcFutureList);
-				for(Processor proc : upchainResults) {
-					// Can have multiple processors that output the same TS as long as they have unique time ranges
-					if(!listContainsEquivalentProcessor(procMap.get(proc.getOutputTimeSeriesUniqueId()), proc)) {	
-						procMap.get(proc.getOutputTimeSeriesUniqueId()).add(proc);
-					}
-					
-					// If this TS is at the same site as our primary TS then add upchain TS to our toExplore list
-					if(siteTsList.contains(proc.getOutputTimeSeriesUniqueId())) {
-						toExplore.addAll(proc.getInputTimeSeriesUniqueIds());
-					}
+			for(Processor proc : waitForFutures(upProcFutureList)) {
+				// Can have multiple processors that output the same TS as long as they have unique time ranges
+				if(!listContainsEquivalentProcessor(procMap.get(proc.getOutputTimeSeriesUniqueId()), proc)) {	
+					procMap.get(proc.getOutputTimeSeriesUniqueId()).add(proc);
+				}
+				
+				// If this TS is at the same site as our primary TS then add upchain TS to our toExplore list
+				if(siteTsList.contains(proc.getOutputTimeSeriesUniqueId())) {
+					toExplore.addAll(proc.getInputTimeSeriesUniqueIds());
 				}
 			}
-			
-			if(!downProcFutureList.isEmpty()) {
-				// Wait for Downchain futures to populate
-				Set<Processor> downchainResults = waitForFutures(downProcFutureList);
-				toExplore.addAll(downchainResults.stream().map(p -> p.getOutputTimeSeriesUniqueId()).collect(Collectors.toSet()));
-			}			
+			toExplore.addAll(waitForFutures(downProcFutureList).stream().map(p -> p.getOutputTimeSeriesUniqueId()).collect(Collectors.toSet()));			
 		}
 
 		return procMap;
