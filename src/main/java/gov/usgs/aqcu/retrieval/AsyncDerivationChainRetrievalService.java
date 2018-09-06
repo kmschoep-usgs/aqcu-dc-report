@@ -9,9 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 
-/**
- * Serivce which asynchronously makes upchain and downchain processor list requests
- */
 @Service
 public class AsyncDerivationChainRetrievalService {
 
