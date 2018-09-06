@@ -21,7 +21,7 @@ aquarius:
     user: ${aquariusServiceUser}
     password: ${aquariusServicePassword}
     retries:
-      unauthorized: ${aquariusUnauthorizedRetires:3}
+      unauthorized: ${aquariusUnauthorizedRetries:3}
 
 security:
   require-ssl: true

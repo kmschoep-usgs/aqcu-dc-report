@@ -53,7 +53,7 @@ public class DerivationChainBuilderService {
 
         //Derivation Chain Data
 		Map<String,List<Processor>> procMap = getRecursiveProcessorMap(primaryTimeSeriesUniqueId, siteTsList);
-		Map<String,TimeSeriesDescription> tsDescMap = getTimeSeriesDesciprionMap(new ArrayList<>(procMap.keySet()));
+		Map<String,TimeSeriesDescription> tsDescMap = getTimeSeriesDescriptionMap(new ArrayList<>(procMap.keySet()));
         Map<String,Set<String>> derivedTsMap = buildReverseDerivationMap(procMap);
         
         //Derivation Chain
@@ -162,7 +162,7 @@ public class DerivationChainBuilderService {
 		return (t1.getStartTime().equals(t2.getStartTime()) && t1.getEndTime().equals(t2.getEndTime()));
 	}
 
-	protected Map<String, TimeSeriesDescription> getTimeSeriesDesciprionMap(List<String> tsIdList) {
+	protected Map<String, TimeSeriesDescription> getTimeSeriesDescriptionMap(List<String> tsIdList) {
 		//According to AQ's API docus this is limited to "roughly" 60 items per request, so need to batch
 		List<TimeSeriesDescription> tsDescs = new ArrayList<>();
 		Map<String,TimeSeriesDescription> tsDescMap = new HashMap<>();

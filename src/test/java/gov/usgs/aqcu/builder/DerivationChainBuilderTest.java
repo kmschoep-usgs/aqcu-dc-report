@@ -535,9 +535,9 @@ public class DerivationChainBuilderTest {
 	}
 
 	@Test
-	public void getTimeSeriesDesciprionMapSingleTest() {
+	public void getTimeSeriesDescriptionMapSingleTest() {
 		given(descService.getTimeSeriesDescriptionList(Arrays.asList("R"))).willReturn(Arrays.asList(descR));
-		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDesciprionMap(Arrays.asList("R"));
+		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(Arrays.asList("R"));
 		assertTrue(result != null);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 1);
@@ -545,9 +545,9 @@ public class DerivationChainBuilderTest {
 	}
 
 	@Test
-	public void getTimeSeriesDesciprionMapSuccessTest() {
+	public void getTimeSeriesDescriptionMapSuccessTest() {
 		given(descService.getTimeSeriesDescriptionList(fullIdList)).willReturn(fullDescList);
-		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDesciprionMap(fullIdList);
+		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(fullIdList);
 		assertTrue(result != null);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), 20);
@@ -574,10 +574,10 @@ public class DerivationChainBuilderTest {
 	}
 
 	@Test
-	public void getTimeSeriesDesciprionMapFailTest() {
+	public void getTimeSeriesDescriptionMapFailTest() {
 		given(descService.getTimeSeriesDescriptionList(fullIdList)).willReturn(fullDescList.subList(1, fullDescList.size()-2));
 		try {
-			service.getTimeSeriesDesciprionMap(fullIdList);
+			service.getTimeSeriesDescriptionMap(fullIdList);
 		} catch(AquariusRetrievalException ARE) {
 			assertTrue(ARE.getMessage().contains("Did not recieve all requested Time Series Descriptions!"));
 			return;
@@ -630,7 +630,7 @@ public class DerivationChainBuilderTest {
 		given(descService.getTimeSeriesDescriptionList(request3)).willReturn(response3);
 
 		//Execute Test
-		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDesciprionMap(mockIdList);
+		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(mockIdList);
 		assertTrue(result != null);
 		assertTrue(!result.isEmpty());
 		assertEquals(result.size(), (DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2 + 1));
@@ -642,7 +642,7 @@ public class DerivationChainBuilderTest {
 	@SuppressWarnings("unchecked")
 	public void getTimeSeriesDescriptionMapEmptyTest() {
 		given(descService.getTimeSeriesDescriptionList(any(ArrayList.class))).willReturn(Arrays.asList(descR));
-		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDesciprionMap(new ArrayList<>());
+		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(new ArrayList<>());
 		assertTrue(result != null);
 		assertTrue(result.isEmpty());
 	}
