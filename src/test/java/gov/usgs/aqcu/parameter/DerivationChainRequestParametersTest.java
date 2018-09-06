@@ -15,17 +15,17 @@ public class DerivationChainRequestParametersTest {
 	Instant reportStartInstant = Instant.parse("2018-03-16T00:00:00.00Z");
 	LocalDate reportEndDate = LocalDate.of(2018, 03, 16);
 	LocalDate reportStartDate = LocalDate.of(2018, 03, 16);
-    String primaryIdentifier = "test-identifier";
-    List<String> excludedCorrs = Arrays.asList("corr1", "corr2", "corr3");
+	 String primaryIdentifier = "test-identifier";
+	 List<String> excludedCorrs = Arrays.asList("corr1", "corr2", "corr3");
 
-    @Test
+	 @Test
 	public void getAsQueryStringTest() {
-        DerivationChainRequestParameters params = new DerivationChainRequestParameters();
+		  DerivationChainRequestParameters params = new DerivationChainRequestParameters();
 		params.setEndDate(reportEndDate);
 		params.setStartDate(reportStartDate);
 		params.setPrimaryTimeseriesIdentifier(primaryIdentifier);
 		params.determineRequestPeriod();
-        String expected = "startDate=2018-03-16&endDate=2018-03-16&primaryTimeseriesIdentifier=test-identifier";
+		  String expected = "startDate=2018-03-16&endDate=2018-03-16&primaryTimeseriesIdentifier=test-identifier";
 		assertEquals(0, params.getAsQueryString(null, false).compareTo(expected));
 	}
 }

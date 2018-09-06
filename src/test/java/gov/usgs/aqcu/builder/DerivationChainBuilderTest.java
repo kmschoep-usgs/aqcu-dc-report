@@ -253,7 +253,40 @@ public class DerivationChainBuilderTest {
 		given(asyncService.getAsyncDownchainProcessorListByTimeSeriesUniqueId("DDD")).willReturn(mockEmptyFuture);
 	}
 
-	public void setupDescResponses() {
+	@Test
+	public void waitForFuturesTest() {
+		List<CompletableFuture<List<Processor>>> futureList = new ArrayList<>();
+		futureList.add(mockAsyncProcs(Arrays.asList(procRC)));
+		futureList.add(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
+		futureList.add(mockAsyncProcs(Arrays.asList(procU2A, procU2B)));
+		List<List<Processor>> result = service.waitForFutures(futureList);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(result.size(), 3);
+		assertThat(result.get(0), containsInAnyOrder(procRC));
+		assertThat(result.get(1), containsInAnyOrder(procD1A, procD2A, procD1B, procD2B));
+		assertThat(result.get(2), containsInAnyOrder(procU2A, procU2B));
+	}
+
+	@Test
+	public void waitForFuturesEmptyResponseTest() {
+		List<CompletableFuture<List<Processor>>> futureList = new ArrayList<>();
+		futureList.add(mockEmptyFuture);
+		futureList.add(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
+		List<List<Processor>> result = service.waitForFutures(futureList);
+		assertTrue(result != null);
+		assertTrue(!result.isEmpty());
+		assertEquals(result.size(), 2);
+		assertTrue(result.get(0).isEmpty());
+		assertThat(result.get(1), containsInAnyOrder(procD1A, procD2A, procD1B, procD2B));
+	}
+
+	@Test
+	public void waitForFuturesEmptyTest() {
+		List<CompletableFuture<List<Processor>>> futureList = new ArrayList<>();
+		List<List<Processor>> result = service.waitForFutures(futureList);
+		assertTrue(result != null);
+		assertTrue(result.isEmpty());
 	}
 
 	@Test

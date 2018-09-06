@@ -29,7 +29,7 @@ import net.servicestack.client.IReturn;
 
 @RunWith(SpringRunner.class)
 public class TimeSeriesDescriptionListServiceTest {
-    
+	 
 	@MockBean
 	private AquariusRetrievalService aquariusService;
 	private TimeSeriesDescriptionListService service;
@@ -93,7 +93,7 @@ public class TimeSeriesDescriptionListServiceTest {
 		.setUtcOffsetIsoDuration(Duration.ofHours(2));
 	public static final ArrayList<TimeSeriesDescription> DESC_LIST = new ArrayList<>(Arrays.asList(DESC_1, DESC_2));
 
-    @Before
+	 @Before
 	public void setup() {
 		service = new TimeSeriesDescriptionListService(aquariusService);
 	}

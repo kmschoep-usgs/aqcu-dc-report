@@ -34,31 +34,31 @@ public class DerivationChainBuilderService {
 	public static final Integer MAX_TS_DESC_QUERY_SIZE = 45;
 
 	private TimeSeriesUniqueIdListService timeSeriesUniqueIdListService;
-    private TimeSeriesDescriptionListService timeSeriesDescriptionListService;
-	private AsyncDerivationChainRetrievalService asyncDerivationChainRetirevalService;
+	private TimeSeriesDescriptionListService timeSeriesDescriptionListService;
+	private AsyncDerivationChainRetrievalService asyncDerivationChainRetrievalService;
 
 	@Autowired
 	public DerivationChainBuilderService(
 		TimeSeriesUniqueIdListService timeSeriesUniqueIdListService,
 		TimeSeriesDescriptionListService timeSeriesDescriptionListService,
-		AsyncDerivationChainRetrievalService asyncDerivationChainRetirevalService) {
-        this.timeSeriesUniqueIdListService = timeSeriesUniqueIdListService;
-        this.timeSeriesDescriptionListService = timeSeriesDescriptionListService;
-		this.asyncDerivationChainRetirevalService = asyncDerivationChainRetirevalService;
-    }
-    
-    public List<DerivationNode> buildDerivationChain(String primaryTimeSeriesUniqueId, String locationIdentifier) {
+		AsyncDerivationChainRetrievalService asyncDerivationChainRetrievalService) {
+		this.timeSeriesUniqueIdListService = timeSeriesUniqueIdListService;
+		this.timeSeriesDescriptionListService = timeSeriesDescriptionListService;
+		this.asyncDerivationChainRetrievalService = asyncDerivationChainRetrievalService;
+	}
+	
+	public List<DerivationNode> buildDerivationChain(String primaryTimeSeriesUniqueId, String locationIdentifier) {
 		//List of TS IDs at this site
 		List<String> siteTsList = timeSeriesUniqueIdListService.getTimeSeriesUniqueIdList(locationIdentifier);
 
-        //Derivation Chain Data
+		//Derivation Chain Data
 		Map<String,List<Processor>> procMap = getRecursiveProcessorMap(primaryTimeSeriesUniqueId, siteTsList);
 		Map<String,TimeSeriesDescription> tsDescMap = getTimeSeriesDescriptionMap(new ArrayList<>(procMap.keySet()));
-        Map<String,Set<String>> derivedTsMap = buildReverseDerivationMap(procMap);
-        
-        //Derivation Chain
-        return buildNodes(procMap, tsDescMap, derivedTsMap);
-    }
+		Map<String,Set<String>> derivedTsMap = buildReverseDerivationMap(procMap);
+		
+		//Derivation Chain
+		return buildNodes(procMap, tsDescMap, derivedTsMap);
+	}
 
 	protected Map<String, List<Processor>> getRecursiveProcessorMap(String primaryTimeSeriesUniqueId, List<String> siteTsList) {
 		Map<String, List<Processor>> procMap = new HashMap<>();
@@ -68,13 +68,14 @@ public class DerivationChainBuilderService {
 
 		// Find all Time Series upchain and downchain of the root
 		while(!toExplore.isEmpty()) {
-			// 1. Start Async Upchain/Downchain Processor Requests
+			// Start Async Upchain/Downchain Processor Requests
 			List<CompletableFuture<List<Processor>>> upProcFutureList = new ArrayList<>();
 			List<CompletableFuture<List<Processor>>> downProcFutureList = new ArrayList<>();
+
+			// Empty out the to-explore stack and create async requests for each TS (if not already explored)
 			while(!toExplore.isEmpty()) {
 				String exploreId = toExplore.pop();
 
-				//Only start requests if we haven't explored this TS already 
 				if(!exploredSet.contains(exploreId)) {
 					exploredSet.add(exploreId);
 
@@ -83,32 +84,26 @@ public class DerivationChainBuilderService {
 						procMap.put(exploreId, new ArrayList<>());
 					}
 
-					upProcFutureList.add(asyncDerivationChainRetirevalService.getAsyncUpchainProcessorListByTimeSeriesUniqueId(exploreId));
+					//Request upchain processors
+					upProcFutureList.add(asyncDerivationChainRetrievalService.getAsyncUpchainProcessorListByTimeSeriesUniqueId(exploreId));
 
-					//Only request downchain if the TS to explore is from the primary TS' site
+					//Only request downchain processors if the TS to explore is from the primary TS' site
 					if(siteTsList.contains(exploreId)) {
-						downProcFutureList.add(asyncDerivationChainRetirevalService.getAsyncDownchainProcessorListByTimeSeriesUniqueId(exploreId));
+						downProcFutureList.add(asyncDerivationChainRetrievalService.getAsyncDownchainProcessorListByTimeSeriesUniqueId(exploreId));
 					}
 				}
 			}
 
 			LOG.debug("Launching " + (upProcFutureList.size() + downProcFutureList.size()) + " Async Requests.");
 
-			// 2. Wait for Upchain futures to populate
+			// Handle upchain requests
 			if(!upProcFutureList.isEmpty()) {
-				CompletableFuture<Void> allUpProcFutures = CompletableFuture.allOf(upProcFutureList.toArray(new CompletableFuture[upProcFutureList.size()]));
-				try {
-					LOG.debug("Waiting for upchain results...");
-					allUpProcFutures.get();
-				} catch(InterruptedException i) {
-					throw new AquariusRetrievalException("Failed to retireve all requested upchain processors.");
-				} catch(ExecutionException e) {
-					throw new AquariusRetrievalException("Failed to retireve all requested upchian processors.");
-				};
+				// Wait for Upchain futures to populate
+				List<List<Processor>> upchainResults = waitForFutures(upProcFutureList);
 
-				// 2a. Process Upchain Results
-				for(CompletableFuture<List<Processor>> future : upProcFutureList) {
-					for(Processor proc : future.join()) {
+				// Process Upchain Results
+				for(List<Processor> result : upchainResults) {
+					for(Processor proc : result) {
 						//Can have multiple processors that output the same TS as long as they have unique time ranges
 						if(procMap.get(proc.getOutputTimeSeriesUniqueId()).isEmpty() || 
 							!listContainsEquivalentProcessor(procMap.get(proc.getOutputTimeSeriesUniqueId()), proc)
@@ -124,21 +119,14 @@ public class DerivationChainBuilderService {
 				}
 			}
 
-			// 4. Wait for Downchain futures to populate
+			// Handle downchain requests
 			if(!downProcFutureList.isEmpty()) {
-				CompletableFuture<Void> alldownProcFutures = CompletableFuture.allOf(downProcFutureList.toArray(new CompletableFuture[downProcFutureList.size()]));
-				try {
-					LOG.debug("Waiting for downchain results...");
-					alldownProcFutures.get();
-				} catch(InterruptedException i) {
-					throw new AquariusRetrievalException("Failed to retireve all requested downchain processors.");
-				} catch(ExecutionException e) {
-					throw new AquariusRetrievalException("Failed to retireve all requested downchian processors.");
-				};
+				// Wait for Downchain futures to populate
+				List<List<Processor>> downchainResults = waitForFutures(downProcFutureList);
 
-				// 4a. Process Dowchain Results
-				for(CompletableFuture<List<Processor>> future : downProcFutureList) {
-					toExplore.addAll(future.join().stream().map(p -> p.getOutputTimeSeriesUniqueId()).collect(Collectors.toSet()));
+				// Add all output TS UIds from all processors to our explore set
+				for(List<Processor> result : downchainResults) {
+					toExplore.addAll(result.stream().map(p -> p.getOutputTimeSeriesUniqueId()).collect(Collectors.toSet()));
 				}
 			}			
 		}
@@ -146,9 +134,18 @@ public class DerivationChainBuilderService {
 		return procMap;
 	}
 
-	/**
-	 * Whether or not the provided list of processors contains a processor with the same time range and output.
-	 */
+	public List<List<Processor>> waitForFutures(List<CompletableFuture<List<Processor>>> futureList) {
+		CompletableFuture<Void> allFutures = CompletableFuture.allOf(futureList.toArray(new CompletableFuture[futureList.size()]));
+		try {
+			allFutures.get();
+		} catch(InterruptedException i) {
+			throw new AquariusRetrievalException("Failed to retireve all requested downchain processors.");
+		} catch(ExecutionException e) {
+			throw new AquariusRetrievalException("Failed to retireve all requested downchian processors.");
+		};
+		return futureList.stream().map(f -> f.join()).collect(Collectors.toList());
+	}
+
 	protected boolean listContainsEquivalentProcessor(List<Processor> procList, Processor procCheck) {
 		for(Processor tsProc : procList) {
 			if(areTimeRangesEquivalent(tsProc.getProcessorPeriod(), procCheck.getProcessorPeriod()) && tsProc.getOutputTimeSeriesUniqueId().equals(procCheck.getOutputTimeSeriesUniqueId())) {
@@ -199,9 +196,6 @@ public class DerivationChainBuilderService {
 		return tsDescMap;
 	}
 
-	/**
-	 * For each time series, builds a list of other time series that are derived from it (time-range agnostic).
-	 */
 	protected Map<String, Set<String>> buildReverseDerivationMap(Map<String, List<Processor>> procMap) {
 		Map<String, Set<String>> derivedMap = new HashMap<>();
 		for(List<Processor> procList : procMap.values()) {

@@ -35,7 +35,7 @@ import com.aquaticinformatics.aquarius.sdk.timeseries.servicemodels.Publish.Time
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
-public class DerivationChainReportBuilderTest {    
+public class DerivationChainReportBuilderTest {	 
 	@MockBean
 	private AquariusRetrievalService aquariusService;
 	@MockBean
