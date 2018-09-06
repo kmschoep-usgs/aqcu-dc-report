@@ -30,15 +30,15 @@ public class DerivationNode {
 	 private String subLocation;
 
 	 public DerivationNode(Processor proc, TimeSeriesDescription tsDesc, Set<String> derivedTimeSeriesUniqueIds) {
-		  //Required
+		  // Required
 		  parseTimeSeriesDescription(tsDesc);
 
-		  //Optional
+		  // Optional
 		  if(proc != null) {
 				parseProcessor(proc);
 		  }
 
-		  //Optional
+		  // Optional
 		  if(derivedTimeSeriesUniqueIds != null && !derivedTimeSeriesUniqueIds.isEmpty()) {
 				this.derivedTimeSeriesUniqueIds = new ArrayList<>(derivedTimeSeriesUniqueIds);
 		  }
@@ -66,7 +66,7 @@ public class DerivationNode {
 		  this.primary = Boolean.toString(TimeSeriesUtils.isPrimaryTimeSeries(tsDesc));
 	 }
 
-	 //Getters
+	 // Getters
 	 public String getProcessorType() {
 		  return processorType;
 	 }

@@ -105,12 +105,12 @@ public class DerivationChainBuilderTest {
 
 	@Before
 	public void setup() {
-		//Builder Service
+		// Builder Service
 		service = new DerivationChainBuilderService(tsUidsService, descService, asyncService);
 
 		mockEmptyFuture.obtrudeValue(new ArrayList<>());
 
-		//Build test chain time ranges
+		// Build test chain time ranges
 		procPeriodA = new TimeRange();
 		procPeriodA.setStartTime(Instant.parse("2016-01-01T00:00:00Z"));
 		procPeriodA.setEndTime(Instant.parse("2017-01-01T00:00:00Z"));
@@ -121,7 +121,7 @@ public class DerivationChainBuilderTest {
 		procPeriodC.setStartTime(Instant.parse("2016-01-01T00:00:00Z"));
 		procPeriodC.setEndTime(Instant.parse("2018-01-01T00:00:00Z"));
 
-		//Build test chain Processors
+		// Build test chain Processors
 		procRC.setInputTimeSeriesUniqueIds(new ArrayList<>(Arrays.asList("U1", "U2", "U3")));
 		procRC.setOutputTimeSeriesUniqueId("R");
 		procRC.setProcessorPeriod(procPeriodC);
@@ -186,7 +186,7 @@ public class DerivationChainBuilderTest {
 		procDDDC.setOutputTimeSeriesUniqueId("DDD");
 		procDDDC.setProcessorPeriod(procPeriodA);
 
-		//Build test chain Descriptions
+		// Build test chain Descriptions
 		descR.setUniqueId("R");
 		descU1.setUniqueId("U1");
 		descU2.setUniqueId("U2");
@@ -624,18 +624,18 @@ public class DerivationChainBuilderTest {
 
 	@Test
 	public void getTimeSeriesDescriptionMapBatchingTest() {
-		//Build Mock ID List
+		// Build Mock ID List
 		List<String> mockIdList = new ArrayList<>();
 		for(Integer i = 0; i < (DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2 + 1); i++) {
 			mockIdList.add(i.toString());
 		}
 
-		//Build Expected Requests
+		// Build Expected Requests
 		List<String> request1 = mockIdList.subList(0, DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE);
 		List<String> request2 = mockIdList.subList(DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE, DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2);
 		List<String> request3 = mockIdList.subList(DerivationChainBuilderService.MAX_TS_DESC_QUERY_SIZE*2, mockIdList.size());
 
-		//Build Expected Responses
+		// Build Expected Responses
 		List<TimeSeriesDescription> response1 = new ArrayList<>();
 		for(String id : request1) {
 			TimeSeriesDescription desc = new TimeSeriesDescription();
@@ -659,12 +659,12 @@ public class DerivationChainBuilderTest {
 		fullResults.addAll(response2);
 		fullResults.addAll(response3);
 
-		//Mock Expected Requests/Responses
+		// Mock Expected Requests/Responses
 		given(descService.getTimeSeriesDescriptionList(request1)).willReturn(response1);
 		given(descService.getTimeSeriesDescriptionList(request2)).willReturn(response2);
 		given(descService.getTimeSeriesDescriptionList(request3)).willReturn(response3);
 
-		//Execute Test
+		// Execute Test
 		Map<String, TimeSeriesDescription> result = service.getTimeSeriesDescriptionMap(mockIdList);
 		assertNotNull(result);
 		assertTrue(!result.isEmpty());
@@ -759,7 +759,7 @@ public class DerivationChainBuilderTest {
 			Set<String> derivedTs = derivedTsMap.get(id);
 			Processor nodeProc = null;
 
-			//Identify the correct source processor, if applicable
+			// Identify the correct source processor, if applicable
 			if(procList != null && !procList.isEmpty()) {
 				for(Processor proc : procList) {
 					if(proc.getProcessorPeriod().getEndTime().equals(node.getPeriodEndTime()) && 
@@ -774,7 +774,7 @@ public class DerivationChainBuilderTest {
 			
 			assertEquals(node.getUniqueId(), desc.getUniqueId());
 
-			//Validate derived ts, if applicable
+			// Validate derived ts, if applicable
 			if(derivedTs != null && !derivedTs.isEmpty()) {
 				assertThat(node.getDerivedTimeSeriesUniqueIds(), containsInAnyOrder(derivedTs.toArray()));
 			}
@@ -787,7 +787,7 @@ public class DerivationChainBuilderTest {
 	public void buildDerivationChainTest() {
 		given(tsUidsService.getTimeSeriesUniqueIdList(any(String.class))).willReturn(fullIdList);
 
-		//Build expected batch description request/responses
+		// Build expected batch description request/responses
 		List<List<TimeSeriesDescription>> responses = new ArrayList<>();
 		responses.add(new ArrayList<>());
 		Integer subListIndex = 0;
@@ -809,7 +809,7 @@ public class DerivationChainBuilderTest {
 			}
 		});
 
-		//Execute Test
+		// Execute Test
 		List<DerivationNode> result = service.buildDerivationChain("R", "location");
 		assertNotNull(result);
 		assertTrue(!result.isEmpty());

@@ -48,15 +48,15 @@ public class DerivationChainBuilderService {
 	}
 	
 	public List<DerivationNode> buildDerivationChain(String primaryTimeSeriesUniqueId, String locationIdentifier) {
-		//List of TS IDs at this site
+		// List of TS IDs at this site
 		List<String> siteTsList = timeSeriesUniqueIdListService.getTimeSeriesUniqueIdList(locationIdentifier);
 
-		//Derivation Chain Data
+		// Derivation Chain Data
 		Map<String,List<Processor>> procMap = getRecursiveProcessorMap(primaryTimeSeriesUniqueId, siteTsList);
 		Map<String,TimeSeriesDescription> tsDescMap = getTimeSeriesDescriptionMap(new ArrayList<>(procMap.keySet()));
 		Map<String,Set<String>> derivedTsMap = buildReverseDerivationMap(procMap);
 		
-		//Derivation Chain
+		// Derivation Chain
 		return buildNodes(procMap, tsDescMap, derivedTsMap);
 	}
 
@@ -79,15 +79,15 @@ public class DerivationChainBuilderService {
 				if(!exploredSet.contains(exploreId)) {
 					exploredSet.add(exploreId);
 
-					//Initialize this entry in the map, if necessary
+					// Initialize this entry in the map, if necessary
 					if(procMap.get(exploreId) == null) {
 						procMap.put(exploreId, new ArrayList<>());
 					}
 
-					//Request upchain processors
+					// Request upchain processors
 					upProcFutureList.add(asyncDerivationChainRetrievalService.getAsyncUpchainProcessorListByTimeSeriesUniqueId(exploreId));
 
-					//Only request downchain processors if the TS to explore is from the primary TS' site
+					// Only request downchain processors if the TS to explore is from the primary TS' site
 					if(siteTsList.contains(exploreId)) {
 						downProcFutureList.add(asyncDerivationChainRetrievalService.getAsyncDownchainProcessorListByTimeSeriesUniqueId(exploreId));
 					}
@@ -104,14 +104,14 @@ public class DerivationChainBuilderService {
 				// Process Upchain Results
 				for(List<Processor> result : upchainResults) {
 					for(Processor proc : result) {
-						//Can have multiple processors that output the same TS as long as they have unique time ranges
+						// Can have multiple processors that output the same TS as long as they have unique time ranges
 						if(procMap.get(proc.getOutputTimeSeriesUniqueId()).isEmpty() || 
 							!listContainsEquivalentProcessor(procMap.get(proc.getOutputTimeSeriesUniqueId()), proc)
 						) {	
 							procMap.get(proc.getOutputTimeSeriesUniqueId()).add(proc);
 						}
 						
-						//If this TS is at the same site as our primary TS then add upchain TS to our toExplore list
+						// If this TS is at the same site as our primary TS then add upchain TS to our toExplore list
 						if(siteTsList.contains(proc.getOutputTimeSeriesUniqueId())) {
 							toExplore.addAll(proc.getInputTimeSeriesUniqueIds());
 						}
@@ -199,7 +199,7 @@ public class DerivationChainBuilderService {
 		Map<String, Set<String>> derivedMap = new HashMap<>();
 		for(List<Processor> procList : procMap.values()) {
 			for(Processor proc : procList) {
-				//Add input time series to the set of time series derived from the current output.
+				// Add input time series to the set of time series derived from the current output.
 				for(String input : proc.getInputTimeSeriesUniqueIds()) {
 					if(derivedMap.get(input) == null) {
 						derivedMap.put(input, new HashSet<>(Arrays.asList(proc.getOutputTimeSeriesUniqueId())));

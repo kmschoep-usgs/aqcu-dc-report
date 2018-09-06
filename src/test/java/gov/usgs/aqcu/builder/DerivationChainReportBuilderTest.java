@@ -62,14 +62,14 @@ public class DerivationChainReportBuilderTest {
 
 	@Before
 	public void setup() {
-		//Builder Servies
+		 uilder Servies
 		service = new DerivationChainReportBuilderService(locService,descService,chainBuilderService);
 
-		//Request Parameters
+		// Request Parameters
 		requestParams = new DerivationChainRequestParameters();
 		requestParams.setPrimaryTimeseriesIdentifier(primaryDesc.getUniqueId());
 
-		//Metadata
+		// Metadata
 		metadata = new DerivationChainReportMetadata();
 		metadata.setPrimaryTsIdentifier(requestParams.getPrimaryTimeseriesIdentifier());
 		metadata.setStationId(primaryDesc.getLocationIdentifier());
