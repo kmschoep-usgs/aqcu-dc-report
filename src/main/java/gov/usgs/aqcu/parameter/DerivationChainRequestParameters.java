@@ -1,13 +1,15 @@
 package gov.usgs.aqcu.parameter;
 
-public class DerivationChainRequestParameters extends ReportRequestParameters {
+import javax.validation.constraints.NotNull;
 
-	public DerivationChainRequestParameters() {
-		
+public class DerivationChainRequestParameters {
+	@NotNull
+	private String primaryTimeseriesIdentifier;
+
+	public String getPrimaryTimeseriesIdentifier() {
+		return primaryTimeseriesIdentifier;
 	}
-
-	@Override 
-	public String getAsQueryString(String overrideIdentifier, boolean absoluteTime) {
-		return super.getAsQueryString(overrideIdentifier, absoluteTime);
+	public void setPrimaryTimeseriesIdentifier(String primaryTimeseriesIdentifier) {
+		this.primaryTimeseriesIdentifier = primaryTimeseriesIdentifier;
 	}
 }

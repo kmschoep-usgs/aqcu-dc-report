@@ -72,7 +72,7 @@ public class DerivationChainBuilderService {
 			List<CompletableFuture<List<Processor>>> upProcFutureList = new ArrayList<>();
 			List<CompletableFuture<List<Processor>>> downProcFutureList = new ArrayList<>();
 
-			// Empty out the to-explore stack and create async requests for each TS (if not already explored)
+			// Empty out the to-explore stack and create async up/down processor requests for each TS (if not already explored)
 			while(!toExplore.isEmpty()) {
 				String exploreId = toExplore.pop();
 
@@ -96,7 +96,7 @@ public class DerivationChainBuilderService {
 
 			LOG.debug("Launching " + (upProcFutureList.size() + downProcFutureList.size()) + " Async Requests.");
 
-			// Handle upchain requests
+			// Handle upchain responses
 			if(!upProcFutureList.isEmpty()) {
 				// Wait for Upchain futures to populate
 				List<List<Processor>> upchainResults = waitForFutures(upProcFutureList);
@@ -119,7 +119,7 @@ public class DerivationChainBuilderService {
 				}
 			}
 
-			// Handle downchain requests
+			// Handle downchain responses
 			if(!downProcFutureList.isEmpty()) {
 				// Wait for Downchain futures to populate
 				List<List<Processor>> downchainResults = waitForFutures(downProcFutureList);
@@ -139,10 +139,10 @@ public class DerivationChainBuilderService {
 		try {
 			allFutures.get();
 		} catch(InterruptedException i) {
-			throw new AquariusRetrievalException("Failed to retireve all requested downchain processors.");
+			throw new AquariusRetrievalException("Failed to retireve all async-requested processors. Caused by: " + i.getMessage());
 		} catch(ExecutionException e) {
-			throw new AquariusRetrievalException("Failed to retireve all requested downchian processors.");
-		};
+			throw new AquariusRetrievalException("Failed to retireve all async-requested processors. Caused by: " + e.getMessage());
+		}
 		return futureList.stream().map(f -> f.join()).collect(Collectors.toList());
 	}
 
@@ -160,18 +160,17 @@ public class DerivationChainBuilderService {
 	}
 
 	protected Map<String, TimeSeriesDescription> getTimeSeriesDescriptionMap(List<String> tsIdList) {
-		//According to AQ's API docus this is limited to "roughly" 60 items per request, so need to batch
+		// According to AQ's API docus this is limited to "roughly" 60 items per request, so need to batch
 		List<TimeSeriesDescription> tsDescs = new ArrayList<>();
 		Map<String,TimeSeriesDescription> tsDescMap = new HashMap<>();
-		int startIndex = 0;
 		int endIndex = 0;
 
 		if(!tsIdList.isEmpty()) {
 			do {
-				startIndex = endIndex;
+				int startIndex = endIndex;
 				endIndex += MAX_TS_DESC_QUERY_SIZE;
 	
-				//Bound indicies
+				// Bound indicies
 				if(startIndex > tsIdList.size()-1) {
 					startIndex = tsIdList.size()-1;
 					endIndex = tsIdList.size();
@@ -179,17 +178,17 @@ public class DerivationChainBuilderService {
 					endIndex = tsIdList.size();
 				}
 	
-				//Do fetch
+				// Do fetch
 				LOG.debug("Fetching " + (endIndex - startIndex) + " Time Series Descriptions.\nRemaining to fetch: " + (tsIdList.size()-endIndex));
 				tsDescs.addAll(timeSeriesDescriptionListService.getTimeSeriesDescriptionList(tsIdList.subList(startIndex, endIndex)));
 			}while(endIndex < tsIdList.size());
 	
-			//Validate that all Descriptions were recieved
+			// Validate that all Descriptions were recieved
 			if(tsIdList.size() != tsDescs.size()) {
 				throw new AquariusRetrievalException("Did not recieve all requested Time Series Descriptions! Requested: " + tsIdList.size() + " | Recieved: " + tsDescs.size());
 			}
 	
-			//Stream to map indexed by TS UID
+			// Stream to map indexed by TS UID
 			tsDescMap = tsDescs.stream().collect(Collectors.toMap(TimeSeriesDescription::getUniqueId,Function.identity()));
 		}
 		

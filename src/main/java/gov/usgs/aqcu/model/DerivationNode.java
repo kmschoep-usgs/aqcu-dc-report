@@ -63,7 +63,7 @@ public class DerivationNode {
 		  this.computation = tsDesc.getComputationIdentifier();
 		  this.publish = tsDesc.isPublish() != null ? tsDesc.isPublish().toString() : Boolean.FALSE.toString();
 		  this.uniqueId = tsDesc.getUniqueId();
-		  this.primary = Boolean.valueOf(TimeSeriesUtils.isPrimaryTimeSeries(tsDesc)).toString();
+		  this.primary = Boolean.toString(TimeSeriesUtils.isPrimaryTimeSeries(tsDesc));
 	 }
 
 	 //Getters
@@ -119,7 +119,7 @@ public class DerivationNode {
 		  return subLocation;
 	 }
 
-	 //Setters
+	 // Setters
 	 public void setProcessorType(String processorType) {
 		  this.processorType = processorType;
 	 }

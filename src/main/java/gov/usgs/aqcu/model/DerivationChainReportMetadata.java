@@ -1,9 +1,6 @@
 package gov.usgs.aqcu.model;
 
-import gov.usgs.aqcu.parameter.DerivationChainRequestParameters;
-
 public class DerivationChainReportMetadata extends ReportMetadata {
-	private DerivationChainRequestParameters requestParameters;
 	private String primarySeriesLabel;
 	private String primaryTsIdentifier;
 	private String requestingUser;
@@ -24,10 +21,6 @@ public class DerivationChainReportMetadata extends ReportMetadata {
 		return requestingUser;
 	}
 	
-	public DerivationChainRequestParameters getRequestParameters() {
-		return requestParameters;
-	}
-	
 	public void setPrimaryTsIdentifier(String val) {
 		primaryTsIdentifier = val;
 	}
@@ -38,11 +31,5 @@ public class DerivationChainReportMetadata extends ReportMetadata {
 
 	public void setRequestingUser(String val) {
 		requestingUser = val;
-	}
-	
-	public void setRequestParameters(DerivationChainRequestParameters val) {
-		//Report Period should be null as it doesn't affect this report
-		requestParameters = val;
-		setPrimaryTsIdentifier(val.getPrimaryTimeseriesIdentifier());
 	}
 }

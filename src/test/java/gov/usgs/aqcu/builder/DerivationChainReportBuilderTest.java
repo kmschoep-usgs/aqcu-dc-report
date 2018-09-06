@@ -68,13 +68,11 @@ public class DerivationChainReportBuilderTest {
 
 		//Request Parameters
 		requestParams = new DerivationChainRequestParameters();
-		requestParams.setStartDate(LocalDate.parse("2017-01-01"));
-		requestParams.setEndDate(LocalDate.parse("2017-02-01"));
 		requestParams.setPrimaryTimeseriesIdentifier(primaryDesc.getUniqueId());
 
 		//Metadata
 		metadata = new DerivationChainReportMetadata();
-		metadata.setRequestParameters(requestParams);
+		metadata.setPrimaryTsIdentifier(requestParams.getPrimaryTimeseriesIdentifier());
 		metadata.setStationId(primaryDesc.getLocationIdentifier());
 		metadata.setStationName(primaryLoc.getName());
 		metadata.setTimezone(primaryDesc.getUtcOffset());
@@ -93,7 +91,6 @@ public class DerivationChainReportBuilderTest {
 		assertTrue(report != null);
 		assertTrue(report.getReportMetadata() != null);
 		assertEquals(report.getReportMetadata().getRequestingUser(), REQUESTING_USER);
-		assertEquals(report.getReportMetadata().getRequestParameters(), metadata.getRequestParameters());
 		assertEquals(report.getReportMetadata().getStartDate(), metadata.getStartDate());
 		assertEquals(report.getReportMetadata().getEndDate(), metadata.getEndDate());
 		assertEquals(report.getReportMetadata().getStationId(), primaryDesc.getLocationIdentifier());
@@ -111,7 +108,6 @@ public class DerivationChainReportBuilderTest {
 		DerivationChainReportMetadata newMetadata = service.getReportMetadata(requestParams, REQUESTING_USER, primaryLoc.getIdentifier(), primaryDesc.getIdentifier(), primaryDesc.getUtcOffset());
 		assertTrue(newMetadata != null);
 		assertEquals(newMetadata.getRequestingUser(), REQUESTING_USER);
-		assertEquals(newMetadata.getRequestParameters(), metadata.getRequestParameters());
 		assertEquals(newMetadata.getStartDate(), metadata.getStartDate());
 		assertEquals(newMetadata.getEndDate(), metadata.getEndDate());
 		assertEquals(newMetadata.getStationId(), primaryDesc.getLocationIdentifier());

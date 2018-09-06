@@ -38,7 +38,7 @@ public class AsyncConfig {
 
 	 @Bean(name = "derivationChainRetrievalExecutor")
 	 public Executor derivationChainRetrievalExecutor() {
-		  //Validate Configuration
+		  // Validate Configuration
 		  if(maxPoolSize == -1) {
 				maxPoolSize = Integer.MAX_VALUE;
 		  } else if(maxPoolSize <= 0) {
@@ -51,7 +51,7 @@ public class AsyncConfig {
 				throw new ValidationException("Queue Capacity must be greater than 0 or equal to -1.");
 		  }
 
-		  //Create Executor
+		  // Create Executor
 		  ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 		  executor.setCorePoolSize(corePoolSize);
 		  executor.setMaxPoolSize(maxPoolSize);

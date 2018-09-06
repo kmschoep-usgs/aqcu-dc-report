@@ -33,10 +33,10 @@ public class DerivationChainReportBuilderService {
 	public DerivationChainReport buildReport(DerivationChainRequestParameters requestParameters, String requestingUser) {
 		DerivationChainReport report = new DerivationChainReport();
 
-		//Primary TS Metadata
+		// Primary TS Metadata
 		TimeSeriesDescription primaryDescription = timeSeriesDescriptionListService.getTimeSeriesDescription(requestParameters.getPrimaryTimeseriesIdentifier());
 
-		//Report Metadata
+		// Report Metadata
 		report.setReportMetadata(getReportMetadata(requestParameters,
 			requestingUser,
 			primaryDescription.getLocationIdentifier(), 
@@ -44,7 +44,7 @@ public class DerivationChainReportBuilderService {
 			primaryDescription.getUtcOffset()
 		));
 
-		//Build Derivation Chain
+		// Build Derivation Chain
 		report.setDerivationsInChain(derivationChainBuilderService.buildDerivationChain(requestParameters.getPrimaryTimeseriesIdentifier(), primaryDescription.getLocationIdentifier()));
 
 		return report;
@@ -54,7 +54,7 @@ public class DerivationChainReportBuilderService {
 		DerivationChainReportMetadata metadata = new DerivationChainReportMetadata();
 		metadata.setTitle(REPORT_TITLE);
 		metadata.setRequestingUser(requestingUser);
-		metadata.setRequestParameters(requestParameters);
+		metadata.setPrimaryTsIdentifier(requestParameters.getPrimaryTimeseriesIdentifier());
 		metadata.setStationId(stationId);
 		metadata.setStationName(locationDescriptionListService.getByLocationIdentifier(stationId).getName());
 		metadata.setTimezone(utcOffset);
