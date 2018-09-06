@@ -261,13 +261,10 @@ public class DerivationChainBuilderTest {
 		futureList.add(mockAsyncProcs(Arrays.asList(procRC)));
 		futureList.add(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
 		futureList.add(mockAsyncProcs(Arrays.asList(procU2A, procU2B)));
-		List<List<Processor>> result = service.waitForFutures(futureList);
+		Set<Processor> result = service.waitForFutures(futureList);
 		assertNotNull(result);
 		assertTrue(!result.isEmpty());
-		assertEquals(result.size(), 3);
-		assertThat(result.get(0), containsInAnyOrder(procRC));
-		assertThat(result.get(1), containsInAnyOrder(procD1A, procD2A, procD1B, procD2B));
-		assertThat(result.get(2), containsInAnyOrder(procU2A, procU2B));
+		assertThat(result, containsInAnyOrder(procRC, procU2A, procU2B, procD1A, procD2A, procD1B, procD2B));
 	}
 
 	@Test
@@ -275,18 +272,16 @@ public class DerivationChainBuilderTest {
 		List<CompletableFuture<List<Processor>>> futureList = new ArrayList<>();
 		futureList.add(mockEmptyFuture);
 		futureList.add(mockAsyncProcs(Arrays.asList(procD1A, procD2A, procD1B, procD2B)));
-		List<List<Processor>> result = service.waitForFutures(futureList);
+		Set<Processor> result = service.waitForFutures(futureList);
 		assertNotNull(result);
 		assertTrue(!result.isEmpty());
-		assertEquals(result.size(), 2);
-		assertTrue(result.get(0).isEmpty());
-		assertThat(result.get(1), containsInAnyOrder(procD1A, procD2A, procD1B, procD2B));
+		assertThat(result, containsInAnyOrder(procD1A, procD2A, procD1B, procD2B));
 	}
 
 	@Test
 	public void waitForFuturesEmptyTest() {
 		List<CompletableFuture<List<Processor>>> futureList = new ArrayList<>();
-		List<List<Processor>> result = service.waitForFutures(futureList);
+		Set<Processor> result = service.waitForFutures(futureList);
 		assertNotNull(result);
 		assertTrue(result.isEmpty());
 	}
