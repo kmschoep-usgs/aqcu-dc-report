@@ -45,7 +45,7 @@ eureka:
 feign:
   hystrix:
     enabled: true
-   client:
+  client:
     config:
       javaToR:
         connectTimeout: ${javaToRServiceConnectTimeout:6000}
