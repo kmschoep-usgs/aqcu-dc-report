@@ -27,6 +27,7 @@ import gov.usgs.aqcu.model.DerivationNode;
 import gov.usgs.aqcu.retrieval.AsyncDerivationChainRetrievalService;
 import gov.usgs.aqcu.retrieval.TimeSeriesDescriptionListService;
 import gov.usgs.aqcu.retrieval.TimeSeriesUniqueIdListService;
+import gov.usgs.aqcu.util.LogExecutionTime;
 
 @Service
 public class DerivationChainBuilderService {
@@ -46,7 +47,7 @@ public class DerivationChainBuilderService {
 		this.timeSeriesDescriptionListService = timeSeriesDescriptionListService;
 		this.asyncDerivationChainRetrievalService = asyncDerivationChainRetrievalService;
 	}
-	
+	@LogExecutionTime
 	public List<DerivationNode> buildDerivationChain(String primaryTimeSeriesUniqueId, String locationIdentifier) {
 		// List of TS IDs at this site
 		List<String> siteTsList = timeSeriesUniqueIdListService.getTimeSeriesUniqueIdList(locationIdentifier);
@@ -59,7 +60,7 @@ public class DerivationChainBuilderService {
 		// Derivation Chain
 		return buildNodes(procMap, tsDescMap, derivedTsMap);
 	}
-
+	@LogExecutionTime
 	protected Map<String, List<Processor>> getRecursiveProcessorMap(String primaryTimeSeriesUniqueId, List<String> siteTsList) {
 		Map<String, List<Processor>> procMap = new HashMap<>();
 		Set<String> exploredSet = new HashSet<>();
@@ -109,15 +110,17 @@ public class DerivationChainBuilderService {
 
 		return procMap;
 	}
-
+	@LogExecutionTime
 	public Set<Processor> waitForFutures(List<CompletableFuture<List<Processor>>> futureList) {
 		CompletableFuture<Void> allFutures = CompletableFuture.allOf(futureList.toArray(new CompletableFuture[futureList.size()]));
 		try {
 			allFutures.get();
 		} catch(InterruptedException i) {
-			throw new AquariusRetrievalException("Failed to retireve all async-requested processors. Caused by: " + i.getMessage());
+			LOG.error("Failed to retrieve all async-requested processors. Caused by: " + i.getMessage());
+			throw new AquariusRetrievalException("Failed to retrieve all async-requested processors. Caused by: " + i.getMessage());
 		} catch(ExecutionException e) {
-			throw new AquariusRetrievalException("Failed to retireve all async-requested processors. Caused by: " + e.getMessage());
+			LOG.error("Failed to retrieve all async-requested processors. Caused by: " + e.getMessage());
+			throw new AquariusRetrievalException("Failed to retrieve all async-requested processors. Caused by: " + e.getMessage());
 		}
 		return futureList.stream().map(f -> f.join()).flatMap(List::stream).collect(Collectors.toSet());
 	}
@@ -161,6 +164,7 @@ public class DerivationChainBuilderService {
 	
 			// Validate that all Descriptions were recieved
 			if(tsIdList.size() != tsDescs.size()) {
+				LOG.error("Did not recieve all requested Time Series Descriptions! Requested: " + tsIdList.size() + " | Recieved: " + tsDescs.size());
 				throw new AquariusRetrievalException("Did not recieve all requested Time Series Descriptions! Requested: " + tsIdList.size() + " | Recieved: " + tsDescs.size());
 			}
 	
@@ -170,7 +174,7 @@ public class DerivationChainBuilderService {
 		
 		return tsDescMap;
 	}
-
+	@LogExecutionTime
 	protected Map<String, Set<String>> buildReverseDerivationMap(Map<String, List<Processor>> procMap) {
 		Map<String, Set<String>> derivedMap = new HashMap<>();
 		for(List<Processor> procList : procMap.values()) {
@@ -188,7 +192,7 @@ public class DerivationChainBuilderService {
 		}
 		return derivedMap;
 	}
-
+	@LogExecutionTime
 	protected List<DerivationNode> buildNodes(Map<String,List<Processor>> procMap, Map<String,TimeSeriesDescription> tsDescMap, Map<String,Set<String>> derivedTsMap) {
 		List<DerivationNode> output = new ArrayList<>();
 		for(String tsUid : procMap.keySet()) {
