@@ -86,7 +86,3 @@ spring:
     name: aqcu-dc-report
   jmx:
     default-domain: aqcu-dc-report
-
-logging:
-  level:
-    gov.usgs.aqcu: INFO
