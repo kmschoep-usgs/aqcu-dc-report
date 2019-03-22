@@ -195,8 +195,10 @@
 				</executions>
 				<configuration>
 					<excludes>
-						<exclude>**/**/**/**/**/**/config/*</exclude>
-					</excludes>
+                        <exclude>gov/usgs/aqcu/config/*.*</exclude>
+                        <exclude>gov/usgs/aqcu/serializer/SwaggerGsonSerializer.class</exclude>
+                        <exclude>gov/usgs/aqcu/Application.class</exclude>
+                    </excludes>
 				</configuration>
 			</plugin>
         </plugins>
