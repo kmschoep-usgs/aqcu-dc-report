@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add performance logging for report builder
 - Add debug log statements
 - Enable logging of application
+- Docker configuration
 
 ### Changed
 - update to aqcu-framework version 0.0.6-SNAPSHOT
+- Merged this repository with the docker-aqcu-dc-report repository
 
 ## [0.0.2] - 2019-02-20
 ### Added
