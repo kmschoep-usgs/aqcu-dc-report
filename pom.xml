@@ -6,7 +6,6 @@
     <version>0.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-
     <properties>
         <cida.maven.url>https://internal.cida.usgs.gov/maven/content/repositories</cida.maven.url>
         <wma.artifactory.url>https://cida.usgs.gov/artifactory</wma.artifactory.url>
@@ -162,11 +161,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
             </plugin>
 
             <plugin>

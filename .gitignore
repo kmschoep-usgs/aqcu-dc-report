@@ -4,3 +4,9 @@ target/**
 .project
 .classpath
 /target/
+**/*.jks
+**/*.p12
+**/*.crt
+**/*.csr
+**/*.chain
+**/*.key
