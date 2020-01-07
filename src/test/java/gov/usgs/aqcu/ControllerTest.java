@@ -61,7 +61,7 @@ public class ControllerTest {
 		given(reportBuilderService.buildReport(any(DerivationChainRequestParameters.class), any(String.class)))
 			.willReturn(report);
 		ResponseEntity<?> result = controller.getReportRawData(new DerivationChainRequestParameters());
-		assertEquals(gson.toJson(result.getBody()), gson.toJson(report));
+		assertEquals(result.getBody(), gson.toJson(report));
 		assertEquals(result.getStatusCode(), HttpStatus.OK);
 	}
 

@@ -47,9 +47,9 @@ public class Controller {
 	}
 	
 	@GetMapping(value="/rawData", produces={MediaType.APPLICATION_JSON_VALUE})
-	public ResponseEntity<DerivationChainReport> getReportRawData(@Validated DerivationChainRequestParameters requestParameters) throws Exception {
+	public ResponseEntity<String> getReportRawData(@Validated DerivationChainRequestParameters requestParameters) throws Exception {
 		DerivationChainReport report = reportBuilderService.buildReport(requestParameters, getRequestingUser());
-		return new ResponseEntity<DerivationChainReport>(report, new HttpHeaders(), HttpStatus.OK);
+		return new ResponseEntity<String>(gson.toJson(report, DerivationChainReport.class), new HttpHeaders(), HttpStatus.OK);
 	}
 	
 	String getRequestingUser() {
