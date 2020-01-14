@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>gov.usgs.aqcu</groupId>
     <artifactId>aqcu-dc-report</artifactId>
@@ -18,6 +19,7 @@
         <aquarius.sdk.version>18.8.1</aquarius.sdk.version>
         <aqcu.framework.version>0.0.8-SNAPSHOT</aqcu.framework.version>
         <spring.boot.version>2.2.2.RELEASE</spring.boot.version>
+        <owasp.dependency.check.version>5.2.4</owasp.dependency.check.version>
     </properties>
 
     <parent>
@@ -41,7 +43,7 @@
 
     <dependencyManagement>
         <dependencies>
-             <dependency>
+            <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>Greenwich.SR3</version>
@@ -54,6 +56,21 @@
                 <version>${spring.boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>1.64</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>9.0.30</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>9.0.30</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -72,22 +89,22 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-        
-         <dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-		<dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-oauth2</artifactId>
@@ -166,17 +183,31 @@
                     </dependency>
                 </dependencies>
             </plugin>
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
                         <exclude>gov/usgs/aqcu/config/*.*</exclude>
                         <exclude>gov/usgs/aqcu/serializer/SwaggerGsonSerializer.class</exclude>
                         <exclude>gov/usgs/aqcu/Application.class</exclude>
                     </excludes>
-				</configuration>
-			</plugin>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>${owasp.dependency.check.version}</version>
+                <executions>
+                    <execution>
+                        <id>dependency-security-check</id>
+                        <configuration>
+                            <suppressionFile>dependency-check-suppression.xml</suppressionFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
